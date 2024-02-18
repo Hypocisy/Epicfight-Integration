@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "priority": 1000,
+  "package": "com.kumoe.EpicFightIntegration.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "efi_mod.refmap.json",
+  "mixins": [
+    "ControlEngineMixin"
+  ],
+  "client": [
+    "SkillBookScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "minVersion": "0.8"
+}
