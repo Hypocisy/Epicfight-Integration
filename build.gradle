@@ -189,14 +189,13 @@ dependencies {
     annotationProcessor 'com.blamejared.crafttweaker:Crafttweaker_Annotation_Processors:3.0.0.15'
     annotationProcessor "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "com.blamejared.crafttweaker:CraftTweaker-forge-${minecraft_version}:${ct_version}"
-    implementation fg.deobf("curse.maven:project-mmo-353935:5039854")
+    implementation fg.deobf("curse.maven:project-mmo-353935:5133458")
     implementation fg.deobf("curse.maven:tetra-289712:4857842")
     implementation fg.deobf("yesman.epicfight:epicfight:20.6.6")
-    implementation fg.deobf("curse.maven:mutil-351914:4824501")
-//    implementation fg.deobf("curse.maven:project-mmo-353935:5068213")
-    implementation fg.deobf("curse.maven:i18nupdatemod-297404:4975638")
-    implementation fg.deobf("curse.maven:jei-238222:4712868")
-    implementation fg.deobf("curse.maven:nbtedit-reborn-678133:5082493")
+    runtimeOnly fg.deobf("curse.maven:mutil-351914:4824501")
+    runtimeOnly fg.deobf("curse.maven:jei-238222:4712868")
+    runtimeOnly fg.deobf("curse.maven:nbtedit-reborn-678133:5082493")
+    compileOnly("com.blamejared.crafttweaker:CraftTweaker-forge-${minecraft_version}:${ct_version}")
 
 }
 

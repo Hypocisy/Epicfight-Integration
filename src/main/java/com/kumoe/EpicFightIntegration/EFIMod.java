@@ -1,27 +1,19 @@
 package com.kumoe.EpicFightIntegration;
 
 import com.kumoe.EpicFightIntegration.config.EFIConfig;
+import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
+import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
 import com.mojang.logging.LogUtils;
-import harmonised.pmmo.api.APIUtils;
-import harmonised.pmmo.api.enums.ObjectType;
-import harmonised.pmmo.api.enums.ReqType;
-import harmonised.pmmo.core.Core;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.javafmlmod.FMLModContainer;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
 import org.slf4j.Logger;
-import yesman.epicfight.world.item.SkillBookItem;
-
-import java.util.HashMap;
-import java.util.Map;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(EFIMod.MODID)
@@ -30,34 +22,30 @@ public class EFIMod {
     public static final String MODID = "efi_mod";
     // Directly reference a slf4j logger
     public static final Logger LOGGER = LogUtils.getLogger();
+    private static final String CHANNEL_PROTOCOL = "0";
+    public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
+            new ResourceLocation(MODID, "main"),
+            () -> CHANNEL_PROTOCOL,
+            CHANNEL_PROTOCOL::equals,
+            CHANNEL_PROTOCOL::equals);
 
     public EFIMod() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Register the commonSetup method for modloading
-//        modEventBus.addListener(this::onServerStart);
-
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, EFIConfig.clientSpec);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, EFIConfig.serverSpec);
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, EFIConfig.commonSpec);
         modEventBus.register(EFIConfig.class);
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
+        this.registerPackets();
+        SkillRequirements.DATA_LOADER.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
     }
 
-    @SubscribeEvent
-    public void onServerStart(ServerStartingEvent event) {
-        ResourceLocation resourceLocation = new ResourceLocation("EFI_SKILL_REQ");
-        Map<String, Integer> testReqs = new HashMap<>();
-        APIUtils.registerActionPredicate(resourceLocation, ReqType.INTERACT, (player, itemStack) -> {
-            if (!itemStack.isEmpty() && player.getMainHandItem().getItem() instanceof SkillBookItem skillBookItem) {
-                return skillBookItem.isFoil(player.getMainHandItem());
-            }
-            return false;
-        });
-        APIUtils.registerRequirement(ObjectType.ITEM, resourceLocation, ReqType.RIDE, testReqs, false);
-//        boolean predicateExists = Core.get(LogicalSide.SERVER).getPredicateRegistry().predicateExists();
-//        LOGGER.debug("is predicate exists {}", predicateExists);
-        LOGGER.debug("predicate resource location {} {}", resourceLocation.getNamespace(), resourceLocation.getPath());
+    void registerPackets() {
+        int id = 0;
+        CHANNEL.registerMessage(id++, SkillRequirementSyncPacket.class,
+                SkillRequirementSyncPacket::encode,
+                SkillRequirementSyncPacket::decode,
+                SkillRequirementSyncPacket::onPacketReceived);
     }
 }
