@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.kumoe.EpicFightIntegration.EFIMod;
+import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -29,6 +29,7 @@ import java.util.Optional;
 public class PackGenerator {
     public static final String PACKNAME = "efi_compat_pack";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    //    private static final Map<String, Map<String, Integer>> requirements = new HashMap<>();
 
     public static int generatePack(MinecraftServer server) {
         //create the filepath for our data pack.  this will do nothing if already created
@@ -43,23 +44,24 @@ public class PackGenerator {
                     StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
 
         } catch (IOException e) {
-            EFIMod.LOGGER.debug("Error While Generating pack.mcmeta for epicfight skill Compat Generated Data: " + e.toString());
+            EpicFightIntegration.LOGGER.debug("Error While Generating pack.mcmeta for epicfight skill Compat Generated Data: " + e);
         }
 
         Map<String, SkillData> skillData = SkillsConfig.SKILLS.get();
-        Map<String, Map<String, Integer>> result = new HashMap<>();
-        Map<String, Integer> requirements = new HashMap<>();
+
+        Map<String, Integer> defaultReq = new HashMap<>();
         skillData.entrySet().parallelStream().forEach(entry -> {
             String skillName = entry.getKey();
-            requirements.put(skillName, 0);
-            result.put("requirements", requirements);
+            defaultReq.put(skillName, 10);
         });
 
-        Path skillPath = filepath.resolve("data/" + EFIMod.MODID + "/" + EpicFightMod.MODID + "/skills/");
+        Path skillPath = filepath.resolve("data/%s/%s/skills".formatted(EpicFightIntegration.MODID, EpicFightMod.MODID));
         skillPath.toFile().mkdirs();
-        SkillManager.getLearnableSkillNames(Skill.Builder::isLearnable).toList().forEach(rl -> {
+//        EFIMod.LOGGER.debug(gson.toJson(defaultReq));
+        String result = "{requirements:{},\"default_reqs\":%s,\"use_default\":false}".formatted(gson.toJson(defaultReq));
+        String prettyPrinted = prettyPrintJSON(result);
 
-            String prettyPrinted = prettyPrintJSON(result.toString());
+        SkillManager.getLearnableSkillNames(Skill.Builder::isLearnable).toList().forEach(rl -> {
             try {
                 Files.writeString(
                         skillPath.resolve(rl.getPath() + ".json"),
@@ -67,7 +69,7 @@ public class PackGenerator {
                         Charset.defaultCharset(),
                         StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
             } catch (IOException e) {
-                EFIMod.LOGGER.debug("Error While Generating " + rl.getPath() + " for epicfight skill Compat Generated Data: " + e);
+                EpicFightIntegration.LOGGER.debug("Error While Generating " + rl.getPath() + " for epicfight skill Compat Generated Data: " + e);
             }
         });
 

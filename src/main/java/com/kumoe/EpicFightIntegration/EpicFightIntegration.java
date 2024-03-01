@@ -5,7 +5,6 @@ import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -16,8 +15,8 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import org.slf4j.Logger;
 
 // The value here should match an entry in the META-INF/mods.toml file
-@Mod(EFIMod.MODID)
-public class EFIMod {
+@Mod(EpicFightIntegration.MODID)
+public class EpicFightIntegration {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "efi_mod";
     // Directly reference a slf4j logger
@@ -29,7 +28,7 @@ public class EFIMod {
             CHANNEL_PROTOCOL::equals,
             CHANNEL_PROTOCOL::equals);
 
-    public EFIMod() {
+    public EpicFightIntegration() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         // Register the commonSetup method for modloading

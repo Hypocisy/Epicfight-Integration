@@ -1,14 +1,12 @@
 package com.kumoe.EpicFightIntegration.config;
 
-import com.kumoe.EpicFightIntegration.EFIMod;
-import com.mojang.serialization.Codec;
+import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.Logging;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
-import yesman.epicfight.main.EpicFightMod;
 
 public class EFIConfig {
     public static final EFIConfig.Client CLIENT;
@@ -48,7 +46,7 @@ public class EFIConfig {
 
         Client(ForgeConfigSpec.Builder builder) {
             builder.comment("Client only settings, mostly things related to rendering").push("client");
-            this.useMultiReqTypes = builder.comment("Whether or not you use more ReqTypes allows your EpicFight skill book to fulfill one or more types of requirements in order to learn it", ", and also affects EpicFight's skill release.").translation(EFIMod.MODID + ".config.use_multi_req_types").define("useMultiReqTypes", true);
+            this.useMultiReqTypes = builder.comment("Whether or not you use more ReqTypes allows your EpicFight skill book to fulfill one or more types of requirements in order to learn it", ", and also affects EpicFight's skill release.").translation(EpicFightIntegration.MODID + ".config.use_multi_req_types").define("useMultiReqTypes", true);
             builder.pop();
         }
     }
