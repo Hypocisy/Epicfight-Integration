@@ -5,15 +5,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
+import com.kumoe.EpicFightIntegration.config.codecs.ReqType;
+import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
+import com.kumoe.EpicFightIntegration.config.codecs.SkillSettings;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import harmonised.pmmo.config.SkillsConfig;
-import harmonised.pmmo.config.codecs.SkillData;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 import yesman.epicfight.api.data.reloader.SkillManager;
-import yesman.epicfight.main.EpicFightMod;
 import yesman.epicfight.skill.Skill;
 
 import java.io.IOException;
@@ -21,15 +22,13 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.function.Function;
 
 public class PackGenerator {
     public static final String PACKNAME = "efi_compat_pack";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    //    private static final Map<String, Map<String, Integer>> requirements = new HashMap<>();
+    public static boolean applyOverride = false, applyDefaults = false, applyDisabler = false, applySimple = false;
 
     public static int generatePack(MinecraftServer server) {
         //create the filepath for our data pack.  this will do nothing if already created
@@ -42,41 +41,34 @@ public class PackGenerator {
                     gson.toJson(getPackObject()),
                     Charset.defaultCharset(),
                     StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
-
         } catch (IOException e) {
             EpicFightIntegration.LOGGER.debug("Error While Generating pack.mcmeta for epicfight skill Compat Generated Data: " + e);
         }
 
-        Map<String, SkillData> skillData = SkillsConfig.SKILLS.get();
-
-        Map<String, Integer> defaultReq = new HashMap<>();
-        skillData.entrySet().parallelStream().forEach(entry -> {
-            String skillName = entry.getKey();
-            defaultReq.put(skillName, 10);
-        });
-
-        Path skillPath = filepath.resolve("data/%s/%s/skills".formatted(EpicFightIntegration.MODID, EpicFightMod.MODID));
-        skillPath.toFile().mkdirs();
-//        EFIMod.LOGGER.debug(gson.toJson(defaultReq));
-        String result = "{requirements:{},\"default_reqs\":%s,\"use_default\":false}".formatted(gson.toJson(defaultReq));
-        String prettyPrinted = prettyPrintJSON(result);
-
-        SkillManager.getLearnableSkillNames(Skill.Builder::isLearnable).toList().forEach(rl -> {
-            try {
-                Files.writeString(
-                        skillPath.resolve(rl.getPath() + ".json"),
-                        prettyPrinted,
-                        Charset.defaultCharset(),
-                        StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
-            } catch (IOException e) {
-                EpicFightIntegration.LOGGER.debug("Error While Generating " + rl.getPath() + " for epicfight skill Compat Generated Data: " + e);
+        for (Category category : Category.values()) {
+            Set<ResourceLocation> locations = category.valueList.apply(server);
+            for (ResourceLocation id : locations) {
+                int index = id.getPath().lastIndexOf('/');
+                String pathRoute = id.getPath().substring(0, Math.max(index, 0));
+                Path finalPath = filepath.resolve("data/" + EpicFightIntegration.MODID + "/" + category.route + "/" + pathRoute);
+                finalPath.toFile().mkdirs();
+                try {
+                    Files.writeString(
+                            finalPath.resolve(id.getPath().substring(id.getPath().lastIndexOf('/') + 1) + ".json"),
+                            category.defaultData.apply(id),
+                            Charset.defaultCharset(),
+                            StandardOpenOption.CREATE_NEW,
+                            StandardOpenOption.WRITE);
+                } catch (IOException e) {
+                    EpicFightIntegration.LOGGER.debug("Error While Generating Pack File For: " + id.toString() + " (" + e.toString() + ")");
+                }
             }
-        });
+        }
 
         return 0;
     }
 
-    private static String prettyPrintJSON(String jsonString) {
+    public static String prettyPrintJSON(String jsonString) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonElement jsonElement = JsonParser.parseString(jsonString);
         return gson.toJson(jsonElement);
@@ -88,6 +80,47 @@ public class PackGenerator {
                 Optional.empty());
 
         return McMeta.CODEC.encodeStart(JsonOps.INSTANCE, pack).result().get();
+    }
+
+    public static int getTemp(MinecraftServer server) {
+
+        Map<ResourceLocation, ReqType> existing = SkillRequirements.TEMPLATES.getData();
+        Map<ResourceLocation, SkillSettings> skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData();
+        SkillSettings s = SkillRequirements.SKILL_SETTINGS.getData(new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/parrying"));
+        EpicFightIntegration.LOGGER.debug(s.toString());
+        skillSettingsData.keySet().forEach(resourceLocation -> EpicFightIntegration.LOGGER.debug(resourceLocation.getPath()));
+//        server.getPlayerList().getPlayers().forEach(serverPlayer -> serverPlayer.sendSystemMessage(Component.literal( ()->).toString())));
+        existing.keySet().forEach(resourceLocation -> EpicFightIntegration.LOGGER.debug(resourceLocation.getPath()));
+//        server.getPlayerList().getPlayers().forEach(serverPlayer -> serverPlayer.sendSystemMessage(Component.literal(existing.toString())));
+//        server.getPlayerList().getPlayers().forEach(serverPlayer -> serverPlayer.sendSystemMessage(Component.literal(skillSettingsData.toString())));
+        return 0;
+    }
+
+    private enum Category {
+        LEARN_ABLE_SKILLS("skill_settings/learn_able_skills", server -> new HashSet<>(SkillManager.getLearnableSkillNames(Skill.Builder::isLearnable).toList()), (id) -> {
+            SkillSettings existing = SkillRequirements.SKILL_SETTINGS.getData(id);
+            return gson.toJson(SkillSettings.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new SkillSettings()).result().get().getAsJsonObject());
+        }), OTHER_SKILLS("skill_settings/other_skills", server -> new HashSet<>(SkillManager.getLearnableSkillNames(b -> !b.isLearnable()).toList()), (id) -> {
+            SkillSettings existing = SkillRequirements.SKILL_SETTINGS.getData(id);
+            return gson.toJson(SkillSettings.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new SkillSettings()).result().get().getAsJsonObject());
+        }), TEMPLATES("templates/skills", server -> {
+            ResourceLocation resourceLocation = new ResourceLocation(EpicFightIntegration.MODID, "test");
+            Set<ResourceLocation> temp = new HashSet<>();
+            temp.add(resourceLocation);
+            return temp;
+        }, (id) -> {
+            ReqType existing = SkillRequirements.TEMPLATES.getData(id);
+            return gson.toJson(ReqType.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new ReqType()).result().get().getAsJsonObject());
+        });
+        public final String route;
+        public final Function<MinecraftServer, Set<ResourceLocation>> valueList;
+        private final Function<ResourceLocation, String> defaultData;
+
+        Category(String route, Function<MinecraftServer, Set<ResourceLocation>> values, Function<ResourceLocation, String> defaultData) {
+            this.route = route;
+            this.valueList = values;
+            this.defaultData = defaultData;
+        }
     }
 
     private record Pack(String description, int format) {

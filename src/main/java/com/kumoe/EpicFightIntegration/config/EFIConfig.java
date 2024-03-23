@@ -31,16 +31,6 @@ public class EFIConfig {
     public EFIConfig() {
     }
 
-    @SubscribeEvent
-    public static void onLoad(ModConfigEvent.Loading configEvent) {
-        LogManager.getLogger().debug(Logging.FORGEMOD, "Loaded forge config file {}", configEvent.getConfig().getFileName());
-    }
-
-    @SubscribeEvent
-    public static void onFileChange(ModConfigEvent.Reloading configEvent) {
-        LogManager.getLogger().debug(Logging.FORGEMOD, "Forge config just got changed on the file system!");
-    }
-
     public static class Client {
         public final ForgeConfigSpec.BooleanValue useMultiReqTypes;
 
