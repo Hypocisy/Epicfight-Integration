@@ -1,18 +1,43 @@
 package com.kumoe.EpicFightIntegration.config.codecs;
 
+import harmonised.pmmo.config.codecs.DataSource;
+import harmonised.pmmo.config.readers.MergeableCodecDataManager;
+import harmonised.pmmo.util.MsLoggy;
+import net.minecraft.resources.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.List;
+import java.util.Map;
 
 public class SkillRequirements {
-    public static final MergeableCodecDataManager<SkillRequirement, SkillRequirement> DATA_LOADER = new MergeableCodecDataManager<>(
-            "epicfight/skills",
-            SkillRequirement.CODEC,
-            SkillRequirements::processSkillRequirements);
+    private static final Logger DATA_LOGGER = LogManager.getLogger();
 
-    private static SkillRequirement processSkillRequirements(final List<SkillRequirement> raws) {
-        if (raws.isEmpty()) {
-            // 返回一个默认的 SkillRequirement 或者抛出一个异常
-            throw new RuntimeException("No SkillRequirement provided");
-        }
-        return raws.get(0);
+    public static final MergeableCodecDataManager<SkillSettings, SkillSettings> SKILL_SETTINGS = new MergeableCodecDataManager<>(
+            "skill_settings",
+            DATA_LOGGER,
+            SkillSettings.CODEC,
+            SkillRequirements::mergeLoaderData,
+            SkillRequirements::printData,
+            SkillSettings::new, null);
+    public static final MergeableCodecDataManager<ReqType, ReqType> TEMPLATES = new MergeableCodecDataManager<>(
+            "templates",
+            DATA_LOGGER,
+            ReqType.CODEC,
+            SkillRequirements::mergeLoaderData,
+            SkillRequirements::printData,
+            ReqType::new, null);
+
+
+    private static <T extends DataSource<T>> T mergeLoaderData(final List<T> raws) {
+        T out = raws.stream().reduce(DataSource::combine).get();
+        return out.isUnconfigured() ? null : out;
+    }
+
+    private static void printData(Map<ResourceLocation, ? extends Record> data) {
+        data.forEach((id, value) -> {
+            if (id == null || value == null) return;
+            MsLoggy.INFO.log(MsLoggy.LOG_CODE.DATA, "Object: {} with Data: {}", id.toString(), value.toString());
+        });
     }
 }

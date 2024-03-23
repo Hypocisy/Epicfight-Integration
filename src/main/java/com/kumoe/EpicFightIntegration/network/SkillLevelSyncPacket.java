@@ -1,6 +1,6 @@
 package com.kumoe.EpicFightIntegration.network;
 
-import com.kumoe.EpicFightIntegration.config.codecs.SkillSettings;
+import com.kumoe.EpicFightIntegration.config.codecs.ReqType;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.mojang.serialization.Codec;
 import net.minecraft.nbt.CompoundTag;
@@ -14,19 +14,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class SkillRequirementSyncPacket {
-    private static final Codec<Map<ResourceLocation, SkillSettings>> MAPPER =
-            Codec.unboundedMap(ResourceLocation.CODEC, SkillSettings.CODEC);
-    public static Map<ResourceLocation, SkillSettings> SYNCED_DATA = new HashMap<>();
+public class SkillLevelSyncPacket {
+    private static final Codec<Map<ResourceLocation, ReqType>> MAPPER =
+            Codec.unboundedMap(ResourceLocation.CODEC, ReqType.CODEC);
+    public static Map<ResourceLocation, ReqType> SYNCED_DATA = new HashMap<>();
 
-    private final Map<ResourceLocation, SkillSettings> map;
+    private final Map<ResourceLocation, ReqType> map;
 
-    public SkillRequirementSyncPacket(Map<ResourceLocation, SkillSettings> map) {
+    public SkillLevelSyncPacket(Map<ResourceLocation, ReqType> map) {
         this.map = map;
     }
 
-    public static SkillRequirementSyncPacket decode(FriendlyByteBuf buffer) {
-        return new SkillRequirementSyncPacket(MAPPER.parse(NbtOps.INSTANCE, buffer.readNbt()).result().orElse(new HashMap<>()));
+    public static SkillLevelSyncPacket decode(FriendlyByteBuf buffer) {
+        return new SkillLevelSyncPacket(MAPPER.parse(NbtOps.INSTANCE, buffer.readNbt()).result().orElse(new HashMap<>()));
     }
 
     public void encode(FriendlyByteBuf buffer) {
@@ -37,10 +37,11 @@ public class SkillRequirementSyncPacket {
         NetworkEvent.Context context = contextGetter.get();
         if (Dist.CLIENT.isClient()) {
             context.enqueueWork(() -> {
-                Map<ResourceLocation, SkillSettings> map = SkillRequirements.SKILL_SETTINGS.getData();
+                Map<ResourceLocation, ReqType> map = SkillRequirements.TEMPLATES.getData();
                 map.putAll(this.map);
             });
         }
+
         context.enqueueWork(this::handlePacketOnMainThread);
         context.setPacketHandled(true);
     }
