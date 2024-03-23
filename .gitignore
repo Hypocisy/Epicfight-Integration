@@ -23,3 +23,10 @@ run
 
 # Files from Forge MDK
 forge*changelog.txt
+/changelog.txt
+/CREDITS.txt
+/libs/epicfight-20.7.3.jar
+/gradle/wrapper/gradle-wrapper.jar
+/gradle/wrapper/gradle-wrapper.properties
+/LICENSE.txt
+/README.txt
