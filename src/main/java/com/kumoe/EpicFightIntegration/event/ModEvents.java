@@ -13,7 +13,7 @@ public class ModEvents {
     public static void onModConfigLoad(ModConfigEvent event) {
         ModConfig config = event.getConfig();
         if (config.getSpec() == EpicFightIntegration.getInstance().getConfigSpec()) {
-            EpicFightIntegration.LOGGER.debug("Loading nuva mob config");
+            EpicFightIntegration.LOGGER.debug("Loading EpicFightIntegration config");
             EFIConfig.bake(config);
         }
     }

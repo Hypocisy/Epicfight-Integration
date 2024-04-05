@@ -2,9 +2,9 @@ package com.kumoe.EpicFightIntegration.mixin;
 
 import com.kumoe.EpicFightIntegration.util.CompactUtil;
 import harmonised.pmmo.setup.datagen.LangProvider;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,17 +23,13 @@ import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import java.util.Map;
 
 @Mixin(value = SkillBookScreen.class)
-public abstract class SkillBookScreenMixin extends Screen {
+public abstract class SkillBookScreenMixin {
 
     @Shadow(remap = false)
     @Final
     protected Skill skill;
     @Unique
     Map<String, Integer> eFIMod$skillResult;
-
-    protected SkillBookScreenMixin(Component pTitle) {
-        super(pTitle);
-    }
 
     @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;"), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void mixinInit(CallbackInfo ci, SkillContainer thisSkill, SkillContainer priorSkill, boolean isUsing, boolean condition, Component tooltip, Button changeButton) {
@@ -50,7 +46,7 @@ public abstract class SkillBookScreenMixin extends Screen {
                     format.append(formatter.formatted(LangProvider.skill(skillName).getString(), level));
                 }
 
-                tooltip = Component.translatable("info.efi_mod.skill", format.toString());
+                tooltip = Component.translatable("pmmo.msg.denial.skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
 
                 changeButton.setTooltip(Tooltip.create(tooltip));
             }

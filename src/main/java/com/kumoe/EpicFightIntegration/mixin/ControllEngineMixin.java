@@ -1,6 +1,7 @@
 package com.kumoe.EpicFightIntegration.mixin;
 
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
+import com.kumoe.EpicFightIntegration.config.EFIConfig;
 import com.kumoe.EpicFightIntegration.util.CompactUtil;
 import harmonised.pmmo.api.enums.ReqType;
 import net.minecraft.ChatFormatting;
@@ -20,13 +21,10 @@ import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.input.EpicFightKeyMappings;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.skill.SkillContainer;
-import yesman.epicfight.skill.SkillSlot;
 import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.entity.eventlistener.SkillExecuteEvent;
 
 import java.util.Map;
-
-import static com.kumoe.EpicFightIntegration.util.CompactUtil.processWeaponSkill;
 
 @Mixin(value = ControllEngine.class, remap = false)
 public abstract class ControllEngineMixin {
@@ -50,13 +48,27 @@ public abstract class ControllEngineMixin {
     @Shadow
     protected abstract void releaseAllServedKeys();
 
+//    @Inject(method = "attackKeyPressed", at = @At(value = "HEAD"))
+//    private void setAttackLightPressedMixin(KeyMapping key, int action, CallbackInfoReturnable<Boolean> cir) {
+//        if (action == 1 && !this.playerpatch.isBattleMode()) {
+//            if (this.minecraft.getCameraEntity() instanceof Mob mob) {
+//                this.playerpatch.toBattleMode(true);
+//                EpicFightIntegration.LOGGER.debug(mob.getDisplayName().getString() + ": player is battle mode" + this.playerpatch.isBattleMode());
+//            }
+//        }
+//    }
+
     @Inject(method = "tick()V", at = @At(value = "HEAD"))
     private void tickMixin(CallbackInfo ci) {
+
+        if (EFIConfig.enableAutoToggleMode)
+            CompactUtil.autoToggleMode(this.playerpatch);
+
         if (this.weaponInnatePressToggle) {
             if (this.isKeyDown(EpicFightKeyMappings.WEAPON_INNATE_SKILL) && this.minecraft.screen == null && this.playerpatch.isBattleMode()) {
                 this.attackLightPressToggle = CompactUtil.dosePlayerMeetReqs(this.playerpatch, ReqType.WEAPON);
                 this.weaponInnatePressToggle = CompactUtil.processWeaponSkill(this.playerpatch);
-                if (!this.weaponInnatePressToggle){
+                if (!this.weaponInnatePressToggle) {
                     this.weaponInnatePressCounter = 0;
                     releaseAllServedKeys();
                 }

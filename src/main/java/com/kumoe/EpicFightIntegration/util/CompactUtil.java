@@ -29,6 +29,19 @@ import java.util.Map;
 
 public class CompactUtil {
 
+    public static void autoToggleMode(PlayerPatch<?> playerPatch) {
+        if (playerPatch.getOriginal().tickCount % EFIConfig.autoToggleTime == 0) {
+//            if (this.minecraft.crosshairPickEntity instanceof Mob && this.minecraft.crosshairPickEntity.isAlive() && !playerpatch.isBattleMode()) {
+            if (playerPatch.isBattleMode() && playerPatch.getTarget() == null) {
+                playerPatch.toMiningMode(true);
+                CompactUtil.send(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
+            } else if (!playerPatch.isBattleMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
+                playerPatch.toBattleMode(true);
+                CompactUtil.send(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
+            }
+        }
+    }
+
     public static Map<String, Integer> getConditions(PlayerPatch<?> caster, ResourceLocation resourceLocation) {
 
         // project mmo ignoreReqs command integration
