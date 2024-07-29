@@ -190,9 +190,9 @@ dependencies {
     annotationProcessor 'com.blamejared.crafttweaker:Crafttweaker_Annotation_Processors:3.0.0.15'
     annotationProcessor "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "com.blamejared.crafttweaker:CraftTweaker-forge-${minecraft_version}:${ct_version}"
-    implementation fg.deobf("curse.maven:project-mmo-353935:5133458")
+    implementation fg.deobf("curse.maven:project-mmo-353935:5551469")
     implementation fg.deobf("curse.maven:tetra-289712:4857842")
-    implementation fg.deobf("curse.maven:epic-fight-mod-405076:5140587")
+    implementation fg.deobf("curse.maven:epic-fight-mod-405076:5159623")
     implementation fg.deobf("curse.maven:weapons-of-miracles-epicfight-918614:5195633")
     runtimeOnly fg.deobf("curse.maven:mutil-351914:4824501")
     runtimeOnly fg.deobf("curse.maven:jei-238222:4712868")

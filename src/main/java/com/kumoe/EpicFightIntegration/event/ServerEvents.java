@@ -6,8 +6,9 @@ import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.network.SkillLevelSyncPacket;
 import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Mob;
-import net.minecraftforge.event.*;
+import net.minecraftforge.event.AddReloadListenerEvent;
+import net.minecraftforge.event.OnDatapackSyncEvent;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -26,12 +27,6 @@ public class ServerEvents {
     @SubscribeEvent
     public static void onCommandRegister(final RegisterCommandsEvent event) {
         CmdPmmoSkillBooksRoot.register(event.getDispatcher());
-    }
-
-    @SubscribeEvent
-    public static void onTagLoad(TagsUpdatedEvent event) {
-        SkillRequirements.SKILL_SETTINGS.postProcess(event.getRegistryAccess());
-        SkillRequirements.TEMPLATES.postProcess(event.getRegistryAccess());
     }
 
     public static void registerPackets() {
@@ -56,14 +51,14 @@ public class ServerEvents {
     public static void onDatapackSync(OnDatapackSyncEvent event) {
         SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
         SkillRequirements.TEMPLATES.subscribeAsSyncable(CHANNEL, SkillLevelSyncPacket::new);
+//        if (event.getPlayer() != null) {
+//            CHANNEL.sendTo(new SkillRequirementSyncPacket(skillSettings.getData()), event.getPlayer().connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+//            CHANNEL.sendTo(new SkillLevelSyncPacket(templates.getData()), event.getPlayer().connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+//        }
     }
 
     public static void init(final FMLCommonSetupEvent event) {
-        event.enqueueWork(() -> {
-            registerPackets();
-            SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
-            SkillRequirements.TEMPLATES.subscribeAsSyncable(CHANNEL, SkillLevelSyncPacket::new);
-        });
+        registerPackets();
     }
 
     public static void resetData() {

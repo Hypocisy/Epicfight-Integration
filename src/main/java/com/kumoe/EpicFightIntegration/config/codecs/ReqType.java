@@ -4,9 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import harmonised.pmmo.config.codecs.DataSource;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public record ReqType(Optional<Map<String, Integer>> levels) implements DataSource<ReqType> {
     public static final Codec<ReqType> CODEC = RecordCodecBuilder.create(instance -> instance.group(

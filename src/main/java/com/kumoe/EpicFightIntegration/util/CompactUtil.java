@@ -66,6 +66,7 @@ public class CompactUtil {
             if (templateData.get(rl) != null)
                 templateData.get(rl).levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> reqList.merge(s, integer, Math::max)));
         }));
+        skillSettingsData.defaultLevels().flatMap(ReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> reqList.merge(string, integer, Math::max)));
 
         if (!reqList.isEmpty()) {
             reqList.forEach((skillName, requiredLevel) -> {

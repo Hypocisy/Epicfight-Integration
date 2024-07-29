@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.network.NetworkEvent;
 
 import java.util.HashMap;
@@ -35,12 +34,10 @@ public class SkillLevelSyncPacket {
 
     public void onPacketReceived(Supplier<NetworkEvent.Context> contextGetter) {
         NetworkEvent.Context context = contextGetter.get();
-        if (Dist.CLIENT.isClient()) {
-            context.enqueueWork(() -> {
-                Map<ResourceLocation, ReqType> map = SkillRequirements.TEMPLATES.getData();
-                map.putAll(this.map);
-            });
-        }
+        context.enqueueWork(() -> {
+            Map<ResourceLocation, ReqType> map = SkillRequirements.TEMPLATES.getData();
+            map.putAll(this.map);
+        });
 
         context.enqueueWork(this::handlePacketOnMainThread);
         context.setPacketHandled(true);

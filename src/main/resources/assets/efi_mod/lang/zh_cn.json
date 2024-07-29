@@ -1,0 +1,8 @@
+{
+  "pmmo.msg.denial.skill": "你需要学习Pmmo技能: %s",
+  "debug.efi_mod.toggle": "自动切换玩家的战斗模式到 : %s",
+  "debug.efi_mod.message.1": "[Debug]EpicFight Skill Registry name: %s",
+  "debug.efi_mod.message.2": "[Debug]Efi conditions(条件): %s",
+  "debug.efi_mod.message.3": "[Debug]Project mmo ReqType: %s",
+  "debug.efi_mod.message.4": "[Debug]Project mmo conditions(条件): %s"
+}
