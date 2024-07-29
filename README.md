@@ -18,6 +18,8 @@ The file name with the .json extension is the name of your Epic Fight skill. Ope
   },
   "override": false
 }
+```
+
 After setting it up this way, PMMO2's building level must be greater than 20, combat level greater than 30, and farming level greater than 50 to learn parrying. If you have already learned parrying, but still do not meet the above conditions, it will still prevent you from using the skill. The logic is similar for other passive skills.
 
 Remember to re-enter the save or restart the server to make your changes take effect.
