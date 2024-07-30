@@ -6,21 +6,21 @@ import harmonised.pmmo.config.codecs.DataSource;
 
 import java.util.*;
 
-public record ReqType(Optional<Map<String, Integer>> levels) implements DataSource<ReqType> {
-    public static final Codec<ReqType> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("level").forGetter(ReqType::levels)
-    ).apply(instance, ReqType::new));
+public record CustomReqType(Optional<Map<String, Integer>> levels) implements DataSource<CustomReqType> {
+    public static final Codec<CustomReqType> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("level").forGetter(CustomReqType::levels)
+    ).apply(instance, CustomReqType::new));
 
-    public ReqType() {
+    public CustomReqType() {
         this(Optional.of(Map.of()));
     }
 
     @Override
-    public ReqType combine(ReqType two) {
+    public CustomReqType combine(CustomReqType two) {
         Map<String, Integer> combinedLevels = new HashMap<>();
         this.levels.ifPresent(combinedLevels::putAll);
         two.levels.ifPresent(stringIntegerMap -> stringIntegerMap.forEach((key, value) -> combinedLevels.merge(key, value, Math::max)));
-        return new ReqType(Optional.of(combinedLevels));
+        return new CustomReqType(Optional.of(combinedLevels));
     }
 
     @Override

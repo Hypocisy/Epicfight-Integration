@@ -36,7 +36,7 @@ public abstract class SkillBookScreenMixin {
         PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
         StringBuilder format = new StringBuilder();
         if (playerpatch != null && condition) {
-            eFIMod$skillResult = CompactUtil.getConditions(playerpatch, CompactUtil.learnAble(skill.getRegistryName().getPath()));
+            eFIMod$skillResult = CompactUtil.getConditions(playerpatch, CompactUtil.learnable(skill.getRegistryName().getPath()));
             if (!eFIMod$skillResult.isEmpty()) {
                 changeButton.active = false;
                 String formatter = "%s: %s\n";

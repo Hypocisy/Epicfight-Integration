@@ -1,7 +1,6 @@
 package com.kumoe.EpicFightIntegration.config;
 
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
-import net.minecraftforge.fml.config.ModConfig;
 
 public final class EFIConfig {
 
@@ -12,7 +11,7 @@ public final class EFIConfig {
     public static boolean enableAutoToggleMode;
     public static int autoToggleTime;
 
-    public static void bake(ModConfig config) {
+    public static void bake() {
         // general settings
         initGeneralSettings();
     }

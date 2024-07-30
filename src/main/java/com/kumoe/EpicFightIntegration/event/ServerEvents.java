@@ -2,18 +2,27 @@ package com.kumoe.EpicFightIntegration.event;
 
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import com.kumoe.EpicFightIntegration.commands.CmdPmmoSkillBooksRoot;
+import com.kumoe.EpicFightIntegration.config.EFIConfig;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.network.SkillLevelSyncPacket;
 import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
+import com.kumoe.EpicFightIntegration.util.CompactUtil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.OnDatapackSyncEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
+import yesman.epicfight.client.ClientEngine;
+import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 
 @Mod.EventBusSubscriber(modid = EpicFightIntegration.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ServerEvents {
@@ -23,6 +32,10 @@ public class ServerEvents {
             () -> CHANNEL_PROTOCOL,
             CHANNEL_PROTOCOL::equals,
             CHANNEL_PROTOCOL::equals);
+    private static final int LEFT_MOUSE = 0;
+//    private static final int RIGHT_MOUSE = 1;
+//    private static final int START_PRESS_MOUSE = 1;
+//    private static final int END_PRESS_MOUSE = 0;
 
     @SubscribeEvent
     public static void onCommandRegister(final RegisterCommandsEvent event) {
@@ -51,18 +64,34 @@ public class ServerEvents {
     public static void onDatapackSync(OnDatapackSyncEvent event) {
         SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
         SkillRequirements.TEMPLATES.subscribeAsSyncable(CHANNEL, SkillLevelSyncPacket::new);
-//        if (event.getPlayer() != null) {
-//            CHANNEL.sendTo(new SkillRequirementSyncPacket(skillSettings.getData()), event.getPlayer().connection.connection, NetworkDirection.PLAY_TO_CLIENT);
-//            CHANNEL.sendTo(new SkillLevelSyncPacket(templates.getData()), event.getPlayer().connection.connection, NetworkDirection.PLAY_TO_CLIENT);
-//        }
-    }
-
-    public static void init(final FMLCommonSetupEvent event) {
-        registerPackets();
     }
 
     public static void resetData() {
         SkillRequirements.SKILL_SETTINGS.clearData();
         SkillRequirements.TEMPLATES.clearData();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onMouseButtonPressed(final InputEvent.MouseButton.Pre event) {
+        LocalPlayerPatch localPlayerPatch = ClientEngine.getInstance().controllEngine.getPlayerPatch();
+        if (ClientEngine.getInstance().minecraft.player != null && Minecraft.getInstance().screen == null) {
+            if (!CompactUtil.processWeaponSkill(localPlayerPatch)) {
+                if (event.getButton() == LEFT_MOUSE) {
+                    // 0 is left mouse button
+                    // 1 is right mouse button
+                    event.setCanceled(true);
+                }
+            }
+        }
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent
+    public static void onClientTick(final TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            if (EFIConfig.enableAutoToggleMode)
+                CompactUtil.autoToggleMode(ClientEngine.getInstance().controllEngine.getPlayerPatch());
+        }
     }
 }

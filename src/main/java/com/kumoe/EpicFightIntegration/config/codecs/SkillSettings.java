@@ -9,22 +9,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public record SkillSettings(Optional<List<ResourceLocation>> templateNames, Optional<ReqType> defaultLevels,
+public record SkillSettings(Optional<List<ResourceLocation>> templateNames, Optional<CustomReqType> defaultLevels,
                             boolean override) implements DataSource<SkillSettings> {
     public static final Codec<SkillSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.list(ResourceLocation.CODEC).optionalFieldOf("templates").forGetter(SkillSettings::templateNames),
-            ReqType.CODEC.optionalFieldOf("default_requirements").forGetter(SkillSettings::defaultLevels),
+            CustomReqType.CODEC.optionalFieldOf("default_requirements").forGetter(SkillSettings::defaultLevels),
             Codec.BOOL.fieldOf("override").forGetter(SkillSettings::override)
     ).apply(instance, SkillSettings::new));
 
     public SkillSettings() {
-        this(Optional.of(List.of()), Optional.of(new ReqType()), false);
+        this(Optional.of(List.of()), Optional.of(new CustomReqType()), false);
     }
 
     @Override
     public SkillSettings combine(SkillSettings two) {
         List<ResourceLocation> combinedTempNames = new ArrayList<>();
-        ReqType combinedDefaultLevels = new ReqType();
+        CustomReqType combinedDefaultLevels = new CustomReqType();
 
         // 合并 template names
         this.templateNames.ifPresent(combinedTempNames::addAll);

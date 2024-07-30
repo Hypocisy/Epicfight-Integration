@@ -1,6 +1,6 @@
 package com.kumoe.EpicFightIntegration.network;
 
-import com.kumoe.EpicFightIntegration.config.codecs.ReqType;
+import com.kumoe.EpicFightIntegration.config.codecs.CustomReqType;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.mojang.serialization.Codec;
 import net.minecraft.nbt.CompoundTag;
@@ -14,13 +14,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class SkillLevelSyncPacket {
-    private static final Codec<Map<ResourceLocation, ReqType>> MAPPER =
-            Codec.unboundedMap(ResourceLocation.CODEC, ReqType.CODEC);
-    public static Map<ResourceLocation, ReqType> SYNCED_DATA = new HashMap<>();
+    private static final Codec<Map<ResourceLocation, CustomReqType>> MAPPER =
+            Codec.unboundedMap(ResourceLocation.CODEC, CustomReqType.CODEC);
+    public static Map<ResourceLocation, CustomReqType> SYNCED_DATA = new HashMap<>();
 
-    private final Map<ResourceLocation, ReqType> map;
+    private final Map<ResourceLocation, CustomReqType> map;
 
-    public SkillLevelSyncPacket(Map<ResourceLocation, ReqType> map) {
+    public SkillLevelSyncPacket(Map<ResourceLocation, CustomReqType> map) {
         this.map = map;
     }
 
@@ -35,7 +35,7 @@ public class SkillLevelSyncPacket {
     public void onPacketReceived(Supplier<NetworkEvent.Context> contextGetter) {
         NetworkEvent.Context context = contextGetter.get();
         context.enqueueWork(() -> {
-            Map<ResourceLocation, ReqType> map = SkillRequirements.TEMPLATES.getData();
+            Map<ResourceLocation, CustomReqType> map = SkillRequirements.TEMPLATES.getData();
             map.putAll(this.map);
         });
 

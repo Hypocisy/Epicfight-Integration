@@ -6,6 +6,9 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+
+import static com.kumoe.EpicFightIntegration.event.ServerEvents.registerPackets;
 
 @Mod.EventBusSubscriber(modid = EpicFightIntegration.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEvents {
@@ -14,7 +17,11 @@ public class ModEvents {
         ModConfig config = event.getConfig();
         if (config.getSpec() == EpicFightIntegration.getInstance().getConfigSpec()) {
             EpicFightIntegration.LOGGER.debug("Loading EpicFightIntegration config");
-            EFIConfig.bake(config);
+            EFIConfig.bake();
         }
+    }
+    @SubscribeEvent
+    public static void onFMLCommonSetup(final FMLCommonSetupEvent event) {
+        registerPackets();
     }
 }

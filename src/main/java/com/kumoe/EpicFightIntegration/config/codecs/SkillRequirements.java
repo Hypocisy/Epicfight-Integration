@@ -20,13 +20,13 @@ public class SkillRequirements {
             SkillRequirements::mergeLoaderData,
             SkillRequirements::printData,
             SkillSettings::new, null);
-    public static final MergeableCodecDataManager<ReqType, ReqType> TEMPLATES = new MergeableCodecDataManager<>(
+    public static final MergeableCodecDataManager<CustomReqType, CustomReqType> TEMPLATES = new MergeableCodecDataManager<>(
             "templates",
             DATA_LOGGER,
-            ReqType.CODEC,
+            CustomReqType.CODEC,
             SkillRequirements::mergeLoaderData,
             SkillRequirements::printData,
-            ReqType::new, null);
+            CustomReqType::new, null);
 
 
     private static <T extends DataSource<T>> T mergeLoaderData(final List<T> raws) {

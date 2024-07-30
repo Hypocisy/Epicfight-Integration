@@ -3,10 +3,11 @@ package com.kumoe.EpicFightIntegration.util;
 
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import com.kumoe.EpicFightIntegration.config.EFIConfig;
-import com.kumoe.EpicFightIntegration.config.codecs.ReqType;
+import com.kumoe.EpicFightIntegration.config.codecs.CustomReqType;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillSettings;
 import harmonised.pmmo.api.APIUtils;
+import harmonised.pmmo.api.enums.ReqType;
 import harmonised.pmmo.config.codecs.PlayerData;
 import harmonised.pmmo.core.Core;
 import net.minecraft.ChatFormatting;
@@ -31,13 +32,12 @@ public class CompactUtil {
 
     public static void autoToggleMode(PlayerPatch<?> playerPatch) {
         if (playerPatch.getOriginal().tickCount % EFIConfig.autoToggleTime == 0) {
-//            if (this.minecraft.crosshairPickEntity instanceof Mob && this.minecraft.crosshairPickEntity.isAlive() && !playerpatch.isBattleMode()) {
             if (playerPatch.isBattleMode() && playerPatch.getTarget() == null) {
                 playerPatch.toMiningMode(true);
-                CompactUtil.send(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
             } else if (!playerPatch.isBattleMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
                 playerPatch.toBattleMode(true);
-                CompactUtil.send(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
             }
         }
     }
@@ -48,63 +48,55 @@ public class CompactUtil {
         if (caster.isLogicalClient()) {
             ResourceLocation playerID = new ResourceLocation(caster.getOriginal().getUUID().toString());
             Core core = Core.get(LogicalSide.CLIENT);
-            PlayerData existing = core.getLoader().PLAYER_LOADER.getData().get(playerID);
-            if (existing != null) {
-                if (existing.ignoreReq()) {
-                    return Map.of();
+            PlayerData playerData = core.getLoader().PLAYER_LOADER.getData().get(playerID);
+            if (playerData != null) {
+                if (playerData.ignoreReq()) {
+                    return new HashMap<>();
                 }
             }
         }
 
         SkillSettings skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData(resourceLocation);
-        Map<ResourceLocation, ReqType> templateData = SkillRequirements.TEMPLATES.getData();
-        Map<String, Integer> reqList = new HashMap<>();
-        Map<String, Integer> unMatchedList = new HashMap<>();
+        Map<ResourceLocation, CustomReqType> templateData = SkillRequirements.TEMPLATES.getData();
+        // project mmo requirement map
+        Map<String, Integer> requirement = APIUtils.getRequirementMap(caster.getValidItemInHand(caster.getOriginal().getUsedItemHand()), ReqType.WEAPON, LogicalSide.CLIENT);
+        Map<String, Integer> customReq = new HashMap<>(requirement);
+        Map<String, Integer> conditions = new HashMap<>();
         // Project mmo skill level
         Map<String, Integer> playerLevels = APIUtils.getAllLevels(caster.getOriginal());
         skillSettingsData.templateNames().ifPresent(resourceLocations -> resourceLocations.forEach(rl -> {
-            if (templateData.get(rl) != null)
-                templateData.get(rl).levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> reqList.merge(s, integer, Math::max)));
+            CustomReqType customReqType = templateData.get(rl);
+            if (customReqType != null)
+                customReqType.levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> customReq.merge(s, integer, Math::max)));
         }));
-        skillSettingsData.defaultLevels().flatMap(ReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> reqList.merge(string, integer, Math::max)));
+        skillSettingsData.defaultLevels().flatMap(CustomReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> customReq.merge(string, integer, Math::max)));
 
-        if (!reqList.isEmpty()) {
-            reqList.forEach((skillName, requiredLevel) -> {
+        if (!customReq.isEmpty()) {
+            customReq.forEach((skillName, requiredLevel) -> {
                 if (playerLevels.containsKey(skillName)) {
                     int playerLevel = playerLevels.get(skillName);
                     boolean isSatisfied = playerLevel >= requiredLevel;
                     if (!isSatisfied) {
-                        unMatchedList.put(skillName, requiredLevel);
+                        conditions.put(skillName, requiredLevel);
                     }
                 } else {
-                    unMatchedList.put(skillName, requiredLevel);
+                    conditions.put(skillName, requiredLevel);
                 }
             });
         }
 
-        return unMatchedList;
+        return conditions;
     }
 
-    public static void send(Component text, Player player) {
-        if (EFIConfig.enableActionBar)
-            player.displayClientMessage(text, true);
+    public static void displayMessage(Component text, Player player) {
+        player.displayClientMessage(text, EFIConfig.enableActionBar);
     }
 
-    public static ResourceLocation learnAble(String val) {
+    public static ResourceLocation learnable(String val) {
         return new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/" + val);
     }
 
-    public static boolean dosePlayerMeetReqs(PlayerPatch<?> playerPatch, harmonised.pmmo.api.enums.ReqType reqType) {
-        Map<String, Integer> reqs = APIUtils.getRequirementMap(playerPatch.getValidItemInHand(playerPatch.getOriginal().getUsedItemHand()), reqType, LogicalSide.CLIENT);
-        if (EFIConfig.enableDebug) {
-            playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.3", reqType.getName()).withStyle(ChatFormatting.BLUE));
-            playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.4", reqs.toString()).withStyle(ChatFormatting.BLUE));
-        }
-        return Core.get(LogicalSide.CLIENT).doesPlayerMeetReq(playerPatch.getOriginal().getUUID(), reqs);
-    }
-
     public static ResourceLocation innate(String val) {
-//        EpicFightIntegration.LOGGER.debug(val);
         return new ResourceLocation(EpicFightIntegration.MODID, "other_skills/" + val);
     }
 
@@ -117,14 +109,17 @@ public class CompactUtil {
         ItemStack itemStack = CompactUtil.getValidItem(playerpatch);
         CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
         Skill innateSkill = item.getInnateSkill(playerpatch, itemStack);
+
         if (innateSkill != null) {
             Map<String, Integer> conditions = CompactUtil.getConditions(playerpatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
+
             if (EFIConfig.enableDebug) {
                 playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
-                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", conditions.toString()).withStyle(ChatFormatting.DARK_AQUA));
+                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));
+                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.3", conditions.toString()).withStyle(ChatFormatting.BLUE));
             }
             if (!conditions.isEmpty()) {
-                CompactUtil.send(Component.translatable("pmmo.msg.denial.skill", conditions.toString()).withStyle(Style.EMPTY.withBold(true).withColor(ChatFormatting.DARK_GRAY)), playerpatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions.toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerpatch.getOriginal());
                 return false;
             }
         }

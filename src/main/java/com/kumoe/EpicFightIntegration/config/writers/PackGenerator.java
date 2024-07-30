@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
-import com.kumoe.EpicFightIntegration.config.codecs.ReqType;
+import com.kumoe.EpicFightIntegration.config.codecs.CustomReqType;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillSettings;
 import com.mojang.serialization.Codec;
@@ -60,7 +60,7 @@ public class PackGenerator {
                             StandardOpenOption.CREATE_NEW,
                             StandardOpenOption.WRITE);
                 } catch (IOException e) {
-                    EpicFightIntegration.LOGGER.debug("Error While Generating Pack File For: " + id.toString() + " (" + e.toString() + ")");
+                    EpicFightIntegration.LOGGER.debug("Error While Generating Pack File For: " + id + " (" + e + ")");
                 }
             }
         }
@@ -84,7 +84,7 @@ public class PackGenerator {
 
     public static int getTemp(MinecraftServer server) {
 
-        Map<ResourceLocation, ReqType> existing = SkillRequirements.TEMPLATES.getData();
+        Map<ResourceLocation, CustomReqType> existing = SkillRequirements.TEMPLATES.getData();
         Map<ResourceLocation, SkillSettings> skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData();
         SkillSettings s = SkillRequirements.SKILL_SETTINGS.getData(new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/parrying"));
         EpicFightIntegration.LOGGER.debug(s.toString());
@@ -109,8 +109,8 @@ public class PackGenerator {
             temp.add(resourceLocation);
             return temp;
         }, (id) -> {
-            ReqType existing = SkillRequirements.TEMPLATES.getData(id);
-            return gson.toJson(ReqType.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new ReqType()).result().get().getAsJsonObject());
+            CustomReqType existing = SkillRequirements.TEMPLATES.getData(id);
+            return gson.toJson(CustomReqType.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new CustomReqType()).result().get().getAsJsonObject());
         });
         public final String route;
         public final Function<MinecraftServer, Set<ResourceLocation>> valueList;

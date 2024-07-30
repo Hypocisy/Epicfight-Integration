@@ -15,7 +15,7 @@ public class Config {
             enableDebug = builder.comment("Show debug info to player?").define("enableDebug", true);
             enableActionBar = builder.comment("Show Action bar info to player?").define("enableActionBar", true);
             enableAutoToggleMode = builder.comment("Enable auto toggle player mode?").define("enableAutoToggleMode", true);
-            autoToggleTime = builder.comment("How much time does we auto toggle player mode?").defineInRange("autoToggleTime", 20,20,1000);
+            autoToggleTime = builder.comment("How much time do we auto toggle player mode?").defineInRange("autoToggleTime", 20,20,1000);
         }
         builder.pop();
     }

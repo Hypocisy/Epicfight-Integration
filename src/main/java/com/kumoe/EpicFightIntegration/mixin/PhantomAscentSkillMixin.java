@@ -26,7 +26,7 @@ public abstract class PhantomAscentSkillMixin {
         if (jumpCounter > 0 || event.getPlayerPatch().currentLivingMotion == LivingMotions.FALL) {
             Skill skill = container.getSkill();
             if (skill != null) {
-                Map<String, Integer> conditions = CompactUtil.getConditions(event.getPlayerPatch(), CompactUtil.learnAble(skill.getRegistryName().getPath()));
+                Map<String, Integer> conditions = CompactUtil.getConditions(event.getPlayerPatch(), CompactUtil.learnable(skill.getRegistryName().getPath()));
                 if (!conditions.isEmpty()) {
                     container.getDataManager().setData(SkillDataKeys.JUMP_COUNT.get(), 0);
                     if (event.getPlayerPatch().isLogicalClient()) {
