@@ -26,13 +26,13 @@ import java.util.*;
 import java.util.function.Function;
 
 public class PackGenerator {
-    public static final String PACKNAME = "efi_compat_pack";
+    public static final String PACK_NAME = "efi_compat_pack";
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     public static boolean applyOverride = false, applyDefaults = false, applyDisabler = false, applySimple = false;
 
     public static int generatePack(MinecraftServer server) {
         //create the filepath for our data pack.  this will do nothing if already created
-        Path filepath = server.getWorldPath(LevelResource.DATAPACK_DIR).resolve(PACKNAME);
+        Path filepath = server.getWorldPath(LevelResource.DATAPACK_DIR).resolve(PACK_NAME);
         filepath.toFile().mkdirs();
         Path packPath = filepath.resolve("pack.mcmeta");
         try {

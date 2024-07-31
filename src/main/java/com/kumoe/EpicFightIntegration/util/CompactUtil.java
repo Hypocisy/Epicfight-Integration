@@ -34,19 +34,19 @@ public class CompactUtil {
         if (playerPatch.getOriginal().tickCount % EFIConfig.autoToggleTime == 0) {
             if (playerPatch.isBattleMode() && playerPatch.getTarget() == null) {
                 playerPatch.toMiningMode(true);
-                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
             } else if (!playerPatch.isBattleMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
                 playerPatch.toBattleMode(true);
-                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode().toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
             }
         }
     }
 
-    public static Map<String, Integer> getConditions(PlayerPatch<?> caster, ResourceLocation resourceLocation) {
+    public static Map<String, Integer> getConditions(PlayerPatch<?> playerPatch, ResourceLocation resourceLocation) {
 
         // project mmo ignoreReqs command integration
-        if (caster.isLogicalClient()) {
-            ResourceLocation playerID = new ResourceLocation(caster.getOriginal().getUUID().toString());
+        if (playerPatch.isLogicalClient()) {
+            ResourceLocation playerID = new ResourceLocation(playerPatch.getOriginal().getUUID().toString());
             Core core = Core.get(LogicalSide.CLIENT);
             PlayerData playerData = core.getLoader().PLAYER_LOADER.getData().get(playerID);
             if (playerData != null) {
@@ -58,34 +58,44 @@ public class CompactUtil {
 
         SkillSettings skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData(resourceLocation);
         Map<ResourceLocation, CustomReqType> templateData = SkillRequirements.TEMPLATES.getData();
-        // project mmo requirement map
-        Map<String, Integer> requirement = APIUtils.getRequirementMap(caster.getValidItemInHand(caster.getOriginal().getUsedItemHand()), ReqType.WEAPON, LogicalSide.CLIENT);
-        Map<String, Integer> customReq = new HashMap<>(requirement);
         Map<String, Integer> conditions = new HashMap<>();
         // Project mmo skill level
-        Map<String, Integer> playerLevels = APIUtils.getAllLevels(caster.getOriginal());
         skillSettingsData.templateNames().ifPresent(resourceLocations -> resourceLocations.forEach(rl -> {
             CustomReqType customReqType = templateData.get(rl);
             if (customReqType != null)
-                customReqType.levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> customReq.merge(s, integer, Math::max)));
+                customReqType.levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> conditions.merge(s, integer, Math::max)));
         }));
-        skillSettingsData.defaultLevels().flatMap(CustomReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> customReq.merge(string, integer, Math::max)));
+        skillSettingsData.defaultLevels().flatMap(CustomReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> conditions.merge(string, integer, Math::max)));
+        return checkUnmetSkillRequirements(playerPatch, conditions);
+    }
 
-        if (!customReq.isEmpty()) {
-            customReq.forEach((skillName, requiredLevel) -> {
+
+    public static Map<String, Integer> checkUnmetSkillRequirements(PlayerPatch<?> playerPatch, Map<String, Integer> requiredSkills) {
+        if (requiredSkills.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Map<String, Integer> playerLevels = APIUtils.getAllLevels(playerPatch.getOriginal());
+        Map<String, Integer> unmetSkillReqs = new HashMap<>();
+        if (!requiredSkills.isEmpty()) {
+            requiredSkills.forEach((skillName, requiredLevel) -> {
                 if (playerLevels.containsKey(skillName)) {
                     int playerLevel = playerLevels.get(skillName);
                     boolean isSatisfied = playerLevel >= requiredLevel;
                     if (!isSatisfied) {
-                        conditions.put(skillName, requiredLevel);
+                        unmetSkillReqs.put(skillName, requiredLevel);
                     }
                 } else {
-                    conditions.put(skillName, requiredLevel);
+                    unmetSkillReqs.put(skillName, requiredLevel);
                 }
             });
         }
+        return unmetSkillReqs;
+    }
 
-        return conditions;
+    public static Map<String, Integer> getConditions(PlayerPatch<?> playerPatch, ReqType reqType) {
+        // project mmo requirement map
+        return APIUtils.getRequirementMap(playerPatch.getValidItemInHand(playerPatch.getOriginal().getUsedItemHand()), reqType, LogicalSide.CLIENT);
     }
 
     public static void displayMessage(Component text, Player player) {
@@ -105,21 +115,21 @@ public class CompactUtil {
                 playerPatch.getOriginal().getMainHandItem() : playerPatch.getOriginal().getOffhandItem();
     }
 
-    public static boolean processWeaponSkill(LocalPlayerPatch playerpatch) {
-        ItemStack itemStack = CompactUtil.getValidItem(playerpatch);
+    public static boolean processWeaponSkill(LocalPlayerPatch playerPatch) {
+        ItemStack itemStack = CompactUtil.getValidItem(playerPatch);
         CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
-        Skill innateSkill = item.getInnateSkill(playerpatch, itemStack);
+        Skill innateSkill = item.getInnateSkill(playerPatch, itemStack);
 
         if (innateSkill != null) {
-            Map<String, Integer> conditions = CompactUtil.getConditions(playerpatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
+            // custom skill conditions
+            Map<String, Integer> conditions = CompactUtil.getConditions(playerPatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
 
             if (EFIConfig.enableDebug) {
-                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
-                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));
-                playerpatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.3", conditions.toString()).withStyle(ChatFormatting.BLUE));
+                playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
+                playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));
             }
             if (!conditions.isEmpty()) {
-                CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions.toString()).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerpatch.getOriginal());
+                CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerPatch.getOriginal());
                 return false;
             }
         }

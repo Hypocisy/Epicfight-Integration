@@ -7,7 +7,11 @@ import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.network.SkillLevelSyncPacket;
 import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
 import com.kumoe.EpicFightIntegration.util.CompactUtil;
+import harmonised.pmmo.api.enums.ReqType;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -22,7 +26,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import yesman.epicfight.client.ClientEngine;
+import yesman.epicfight.client.events.engine.ControllEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
+
+import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = EpicFightIntegration.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ServerEvents {
@@ -33,8 +40,8 @@ public class ServerEvents {
             CHANNEL_PROTOCOL::equals,
             CHANNEL_PROTOCOL::equals);
     private static final int LEFT_MOUSE = 0;
-//    private static final int RIGHT_MOUSE = 1;
-//    private static final int START_PRESS_MOUSE = 1;
+    //    private static final int RIGHT_MOUSE = 1;
+    private static final int START_PRESS_MOUSE = 1;
 //    private static final int END_PRESS_MOUSE = 0;
 
     @SubscribeEvent
@@ -74,15 +81,23 @@ public class ServerEvents {
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onMouseButtonPressed(final InputEvent.MouseButton.Pre event) {
-        LocalPlayerPatch localPlayerPatch = ClientEngine.getInstance().controllEngine.getPlayerPatch();
-        if (ClientEngine.getInstance().minecraft.player != null && Minecraft.getInstance().screen == null) {
-            if (!CompactUtil.processWeaponSkill(localPlayerPatch)) {
-                if (event.getButton() == LEFT_MOUSE) {
-                    // 0 is left mouse button
-                    // 1 is right mouse button
-                    event.setCanceled(true);
+        ControllEngine controllEngine = ClientEngine.getInstance().controllEngine;
+        LocalPlayerPatch playerPatch = controllEngine.getPlayerPatch();
+        boolean caceled = false;
+        // 0 is left mouse button
+        // 1 is right mouse button
+        if (ClientEngine.getInstance().minecraft.player != null && Minecraft.getInstance().screen == null && event.getButton() == LEFT_MOUSE) {
+            Map<String, Integer> pmmoConditions = CompactUtil.checkUnmetSkillRequirements(playerPatch, CompactUtil.getConditions(playerPatch, ReqType.WEAPON));
+            if (!pmmoConditions.isEmpty()) {
+                if (event.getAction() == START_PRESS_MOUSE && EFIConfig.enableDebug) {
+                    playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.3", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));
+                    playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.4", pmmoConditions).withStyle(ChatFormatting.BLUE));
+                    CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", pmmoConditions).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerPatch.getOriginal());
                 }
+                caceled = true;
+
             }
+            event.setCanceled(caceled);
         }
     }
 
