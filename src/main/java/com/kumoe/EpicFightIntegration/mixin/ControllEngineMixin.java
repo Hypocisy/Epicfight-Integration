@@ -47,14 +47,15 @@ public abstract class ControllEngineMixin {
 
     @Inject(method = "tick()V", at = @At(value = "HEAD"))
     private void tickMixin(CallbackInfo ci) {
-        if (this.weaponInnatePressToggle) {
-            if (this.isKeyDown(EpicFightKeyMappings.WEAPON_INNATE_SKILL) && this.minecraft.screen == null && this.playerpatch.isBattleMode()) {
-                this.attackLightPressToggle = true;
-                this.weaponInnatePressToggle = CompactUtil.processWeaponSkill(this.playerpatch);
-                if (!this.weaponInnatePressToggle) {
-                    this.weaponInnatePressCounter = 0;
-                    releaseAllServedKeys();
-                }
+
+        if (this.isKeyDown(EpicFightKeyMappings.WEAPON_INNATE_SKILL) && this.minecraft.screen == null
+                && this.playerpatch.isBattleMode() && this.weaponInnatePressToggle) {
+            boolean isMatchConditions = CompactUtil.isPlayerMatchConditions(this.playerpatch);
+            if (!isMatchConditions) {
+                this.attackLightPressToggle = false;
+                this.weaponInnatePressToggle = true;
+                this.weaponInnatePressCounter = 0;
+                releaseAllServedKeys();
             }
         }
     }
@@ -69,6 +70,7 @@ public abstract class ControllEngineMixin {
                 SkillExecuteEvent event = new SkillExecuteEvent(this.playerpatch, skillContainer);
 
                 if (skillContainer.canExecute(playerpatch, event) && this.playerpatch.getOriginal().getVehicle() == null) {
+                    // if player have conditions
                     if (!conditions.isEmpty()) {
                         CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions.toString()).withStyle(Style.EMPTY.withBold(true).withColor(ChatFormatting.YELLOW)), playerpatch.getOriginal());
                         playerpatch.getOriginal().playSound(SoundEvents.ANVIL_FALL);

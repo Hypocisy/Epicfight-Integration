@@ -115,7 +115,7 @@ public class CompactUtil {
                 playerPatch.getOriginal().getMainHandItem() : playerPatch.getOriginal().getOffhandItem();
     }
 
-    public static boolean processWeaponSkill(LocalPlayerPatch playerPatch) {
+    public static boolean isPlayerMatchConditions(LocalPlayerPatch playerPatch) {
         ItemStack itemStack = CompactUtil.getValidItem(playerPatch);
         CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
         Skill innateSkill = item.getInnateSkill(playerPatch, itemStack);
@@ -130,9 +130,9 @@ public class CompactUtil {
             }
             if (!conditions.isEmpty()) {
                 CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerPatch.getOriginal());
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }
