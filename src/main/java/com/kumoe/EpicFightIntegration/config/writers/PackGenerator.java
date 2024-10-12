@@ -97,10 +97,10 @@ public class PackGenerator {
     }
 
     private enum Category {
-        LEARN_ABLE_SKILLS("skill_settings/learn_able_skills", server -> new HashSet<>(SkillManager.getLearnableSkillNames(Skill.Builder::isLearnable).toList()), (id) -> {
+        LEARN_ABLE_SKILLS("skill_settings/learn_able_skills", server -> new HashSet<>(SkillManager.getSkills(skill -> skill.getCategory().learnable()).stream().map(Skill::getRegistryName).toList()), (id) -> {
             SkillSettings existing = SkillRequirements.SKILL_SETTINGS.getData(id);
             return gson.toJson(SkillSettings.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new SkillSettings()).result().get().getAsJsonObject());
-        }), OTHER_SKILLS("skill_settings/other_skills", server -> new HashSet<>(SkillManager.getLearnableSkillNames(b -> !b.isLearnable()).toList()), (id) -> {
+        }), OTHER_SKILLS("skill_settings/other_skills", server -> new HashSet<>(SkillManager.getSkills(skill -> !skill.getCategory().learnable()).stream().map(Skill::getRegistryName).toList()), (id) -> {
             SkillSettings existing = SkillRequirements.SKILL_SETTINGS.getData(id);
             return gson.toJson(SkillSettings.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new SkillSettings()).result().get().getAsJsonObject());
         }), TEMPLATES("templates/skills", server -> {

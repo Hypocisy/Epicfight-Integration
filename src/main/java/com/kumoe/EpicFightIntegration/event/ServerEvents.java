@@ -104,9 +104,10 @@ public class ServerEvents {
     @OnlyIn(Dist.CLIENT)
     @SubscribeEvent
     public static void onClientTick(final TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            if (EFIConfig.enableAutoToggleMode)
-                CompactUtil.autoToggleMode(ClientEngine.getInstance().controllEngine.getPlayerPatch());
+        if (event.phase == TickEvent.Phase.END && EFIConfig.enableAutoToggleMode) {
+            LocalPlayerPatch playerPatch = ClientEngine.getInstance().controllEngine.getPlayerPatch();
+            if (playerPatch != null)
+                CompactUtil.autoToggleMode(playerPatch);
         }
     }
 }

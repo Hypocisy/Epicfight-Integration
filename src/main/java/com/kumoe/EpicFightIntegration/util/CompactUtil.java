@@ -130,9 +130,9 @@ public class CompactUtil {
             }
             if (!conditions.isEmpty()) {
                 CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerPatch.getOriginal());
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 }
