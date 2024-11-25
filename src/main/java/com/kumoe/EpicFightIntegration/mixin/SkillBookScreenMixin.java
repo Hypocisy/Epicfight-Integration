@@ -37,7 +37,7 @@ public abstract class SkillBookScreenMixin {
         PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
         StringBuilder format = new StringBuilder();
         if (playerpatch != null && condition) {
-            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch, CompactUtil.innate(skill.getRegistryName().getPath()));
+            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch, CompactUtil.learnable(skill.getRegistryName().getPath()));
             if (!eFIMod$skillResult.isEmpty()) {
                 learnButton.active = false;
                 String formatter = "%s: %s\n";
@@ -50,6 +50,7 @@ public abstract class SkillBookScreenMixin {
                 tooltip = Component.translatable("inventory.epicfight.guide_innate_tooltip.required_skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
 
                 learnButton.setTooltip(Tooltip.create(tooltip));
+                learnButton.setMessage(Component.translatable("gui.epicfight.unusable"));
             }
         }
     }
