@@ -42,7 +42,7 @@ public class CompactUtil {
         }
     }
 
-    public static Map<String, Integer> getConditions(PlayerPatch<?> playerPatch, ResourceLocation resourceLocation) {
+    public static Map<String, Integer> getSkillCondition(PlayerPatch<?> playerPatch, ResourceLocation resourceLocation) {
 
         // project mmo ignoreReqs command integration
         if (playerPatch.isLogicalClient()) {
@@ -66,11 +66,17 @@ public class CompactUtil {
                 customReqType.levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> conditions.merge(s, integer, Math::max)));
         }));
         skillSettingsData.defaultLevels().flatMap(CustomReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> conditions.merge(string, integer, Math::max)));
-        return checkUnmetSkillRequirements(playerPatch, conditions);
+        return getRemainMapOrEmpty(playerPatch, conditions);
     }
 
-
-    public static Map<String, Integer> checkUnmetSkillRequirements(PlayerPatch<?> playerPatch, Map<String, Integer> requiredSkills) {
+    /**
+     * Get remain condition if player not matches.<br>
+     *
+     * @param playerPatch    who need to check this requirement
+     * @param requiredSkills The requirement skills
+     * @return Empty HashMap if requiredSkills is empty, else return remain unmet requirement
+     */
+    public static Map<String, Integer> getRemainMapOrEmpty(PlayerPatch<?> playerPatch, Map<String, Integer> requiredSkills) {
         if (requiredSkills.isEmpty()) {
             return new HashMap<>();
         }
@@ -93,9 +99,15 @@ public class CompactUtil {
         return unmetSkillReqs;
     }
 
-    public static Map<String, Integer> getConditions(PlayerPatch<?> playerPatch, ReqType reqType) {
+    public static Map<String, Integer> getHandItemCondition(PlayerPatch<?> playerPatch, ReqType reqType) {
         // project mmo requirement map
-        return APIUtils.getRequirementMap(playerPatch.getValidItemInHand(playerPatch.getOriginal().getUsedItemHand()), reqType, LogicalSide.CLIENT);
+        var usedItemHand = playerPatch.getOriginal().getUsedItemHand();
+        var validItem = playerPatch.getValidItemInHand(usedItemHand);
+        return getItemCondition(validItem, reqType);
+    }
+
+    public static Map<String, Integer> getItemCondition(ItemStack itemStack, ReqType reqType) {
+        return APIUtils.getRequirementMap(itemStack, reqType, LogicalSide.CLIENT);
     }
 
     public static void displayMessage(Component text, Player player) {
@@ -111,19 +123,23 @@ public class CompactUtil {
     }
 
     public static ItemStack getValidItem(PlayerPatch<?> playerPatch) {
-        return !playerPatch.isOffhandItemValid() || playerPatch.getValidItemInHand(InteractionHand.OFF_HAND).isEmpty() ?
-                playerPatch.getOriginal().getMainHandItem() : playerPatch.getOriginal().getOffhandItem();
+        return !playerPatch.isOffhandItemValid() || playerPatch.getValidItemInHand(InteractionHand.OFF_HAND).isEmpty() ? playerPatch.getOriginal().getMainHandItem() : playerPatch.getOriginal().getOffhandItem();
     }
 
-    public static boolean isPlayerMatchConditions(LocalPlayerPatch playerPatch) {
+    /**
+     * Is player match custom datapack conditions?
+     *
+     * @param playerPatch packed player by epicfight
+     * @return true if player match, otherwise false.
+     */
+    public static boolean isMatchCondition(LocalPlayerPatch playerPatch) {
         ItemStack itemStack = CompactUtil.getValidItem(playerPatch);
         CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
         Skill innateSkill = item.getInnateSkill(playerPatch, itemStack);
 
         if (innateSkill != null) {
             // custom skill conditions
-            Map<String, Integer> conditions = CompactUtil.getConditions(playerPatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
-
+            Map<String, Integer> conditions = CompactUtil.getSkillCondition(playerPatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
             if (EFIConfig.enableDebug) {
                 playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
                 playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));

@@ -1,6 +1,7 @@
 package com.kumoe.EpicFightIntegration.mixin;
 
 import com.kumoe.EpicFightIntegration.util.CompactUtil;
+import com.mojang.blaze3d.platform.Window;
 import harmonised.pmmo.setup.datagen.LangProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
@@ -31,14 +32,14 @@ public abstract class SkillBookScreenMixin {
     @Unique
     Map<String, Integer> eFIMod$skillResult;
 
-    @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;"), locals = LocalCapture.CAPTURE_FAILSOFT)
-    private void mixinInit(CallbackInfo ci, SkillContainer thisSkill, SkillContainer priorSkill, boolean isUsing, boolean condition, Component tooltip, Button changeButton) {
+    @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;",ordinal = 0), locals = LocalCapture.CAPTURE_FAILSOFT)
+    private void initMixin(CallbackInfo ci, SkillContainer thisSkill, SkillContainer priorSkill, boolean isUsing, boolean condition, Component tooltip, Window window, Button learnButton, int consumptionEndPos) {
         PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
         StringBuilder format = new StringBuilder();
         if (playerpatch != null && condition) {
-            eFIMod$skillResult = CompactUtil.getConditions(playerpatch, CompactUtil.learnable(skill.getRegistryName().getPath()));
+            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch, CompactUtil.innate(skill.getRegistryName().getPath()));
             if (!eFIMod$skillResult.isEmpty()) {
-                changeButton.active = false;
+                learnButton.active = false;
                 String formatter = "%s: %s\n";
                 for (Map.Entry<String, Integer> entry : eFIMod$skillResult.entrySet()) {
                     String skillName = entry.getKey();
@@ -46,9 +47,9 @@ public abstract class SkillBookScreenMixin {
                     format.append(formatter.formatted(LangProvider.skill(skillName).getString(), level));
                 }
 
-                tooltip = Component.translatable("pmmo.msg.denial.skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
+                tooltip = Component.translatable("inventory.epicfight.guide_innate_tooltip.required_skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
 
-                changeButton.setTooltip(Tooltip.create(tooltip));
+                learnButton.setTooltip(Tooltip.create(tooltip));
             }
         }
     }

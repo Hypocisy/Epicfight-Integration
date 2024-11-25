@@ -30,7 +30,7 @@ public class SkillRequirements {
 
 
     private static <T extends DataSource<T>> T mergeLoaderData(final List<T> raws) {
-        T out = raws.stream().reduce(DataSource::combine).get();
+        T out = raws.stream().reduce(DataSource::combine).orElseThrow();
         return out.isUnconfigured() ? null : out;
     }
 

@@ -9,6 +9,7 @@
   ],
   "client": [
     "ControllEngineMixin",
+    "RenderEngineMixin",
     "SkillBookScreenMixin"
   ],
   "injectors": {

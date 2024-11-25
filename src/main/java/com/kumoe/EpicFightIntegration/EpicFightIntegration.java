@@ -9,7 +9,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(EpicFightIntegration.MODID)
 public class EpicFightIntegration {
     // Define mod id in a common place for everything to reference
@@ -19,7 +18,6 @@ public class EpicFightIntegration {
     private static EpicFightIntegration instance;
 
     final Pair<Config, ForgeConfigSpec> configured = (new ForgeConfigSpec.Builder()).configure(Config::new);
-
     public EpicFightIntegration() {
         instance = this;
         // Register the commonSetup method for modloading

@@ -12,7 +12,7 @@ public record CustomReqType(Optional<Map<String, Integer>> levels) implements Da
     ).apply(instance, CustomReqType::new));
 
     public CustomReqType() {
-        this(Optional.of(Map.of()));
+        this(Optional.empty());
     }
 
     @Override
