@@ -5,10 +5,11 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "efi_mod.refmap.json",
   "mixins": [
-    "PhantomAscentSkillMixin"
+
   ],
   "client": [
     "ControllEngineMixin",
+    "PhantomAscentSkillMixin",
     "RenderEngineMixin",
     "SkillBookScreenMixin"
   ],
