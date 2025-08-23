@@ -22,8 +22,9 @@ import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 import java.util.Map;
+import java.util.Optional;
 
-@Mixin(value = SkillBookScreen.class)
+@Mixin(value = SkillBookScreen.class,remap = false)
 public abstract class SkillBookScreenMixin {
 
     @Shadow(remap = false)
@@ -33,7 +34,7 @@ public abstract class SkillBookScreenMixin {
     Map<String, Integer> eFIMod$skillResult;
 
     @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;",ordinal = 0), locals = LocalCapture.CAPTURE_FAILSOFT)
-    private void initMixin(CallbackInfo ci, SkillContainer thisSkill, SkillContainer priorSkill, boolean isUsing, boolean condition, Component tooltip, Window window, Button learnButton, int consumptionEndPos) {
+    private void initMixin(CallbackInfo ci, Optional<SkillContainer> thisSkill, Optional<SkillContainer> priorSkill, boolean isUsing, boolean condition, Component tooltip, Window window, Button learnButton, int consumptionEndPos) {
         PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
         StringBuilder format = new StringBuilder();
         if (playerpatch != null && condition) {

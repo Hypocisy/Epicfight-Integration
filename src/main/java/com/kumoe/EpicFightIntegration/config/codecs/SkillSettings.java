@@ -1,6 +1,7 @@
 package com.kumoe.EpicFightIntegration.config.codecs;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import harmonised.pmmo.config.codecs.DataSource;
 import net.minecraft.resources.ResourceLocation;
@@ -11,11 +12,12 @@ import java.util.Optional;
 
 public record SkillSettings(Optional<List<ResourceLocation>> templateNames, Optional<CustomReqType> defaultLevels,
                             boolean override) implements DataSource<SkillSettings> {
-    public static final Codec<SkillSettings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.list(ResourceLocation.CODEC).optionalFieldOf("templates").forGetter(SkillSettings::templateNames),
-            CustomReqType.CODEC.optionalFieldOf("default_requirements").forGetter(SkillSettings::defaultLevels),
-            Codec.BOOL.fieldOf("override").forGetter(SkillSettings::override)
-    ).apply(instance, SkillSettings::new));
+
+	public static final MapCodec<SkillSettings> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+			Codec.list(ResourceLocation.CODEC).optionalFieldOf("templates").forGetter(SkillSettings::templateNames),
+			CustomReqType.codec().optionalFieldOf("default_requirements").forGetter(SkillSettings::defaultLevels),
+			Codec.BOOL.fieldOf("override").forGetter(SkillSettings::override)
+	).apply(instance, SkillSettings::new));
 
     public SkillSettings() {
         this(Optional.of(List.of()), Optional.of(new CustomReqType()), false);
@@ -40,6 +42,10 @@ public record SkillSettings(Optional<List<ResourceLocation>> templateNames, Opti
 
         return new SkillSettings(Optional.of(combinedTempNames), Optional.of(combinedDefaultLevels), combinedOverride);
     }
+
+	public static Codec<SkillSettings> codec(){
+		return MAP_CODEC.codec();
+	}
 
     @Override
     public boolean isUnconfigured() {

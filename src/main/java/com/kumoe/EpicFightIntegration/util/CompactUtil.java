@@ -17,7 +17,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.LogicalSide;
+import net.minecraft.world.level.Level;
+import net.neoforged.fml.LogicalSide;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.skill.Skill;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -32,11 +33,11 @@ public class CompactUtil {
 
 	public static void autoToggleMode(PlayerPatch<?> playerPatch) {
 		if (playerPatch.getOriginal().tickCount % EFIConfig.autoToggleTime == 0) {
-			if (playerPatch.isBattleMode() && playerPatch.getTarget() == null) {
-				playerPatch.toMiningMode(true);
+			if (playerPatch.isEpicFightMode() && playerPatch.getTarget() == null) {
+				playerPatch.toVanillaMode(true);
 				CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
-			} else if (!playerPatch.isBattleMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
-				playerPatch.toBattleMode(true);
+			} else if (playerPatch.isVanillaMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
+				playerPatch.toEpicFightMode(true);
 				CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
 			}
 		}
@@ -46,7 +47,7 @@ public class CompactUtil {
 
 		// project mmo ignoreReqs command integration
 		if (playerPatch.isLogicalClient()) {
-			ResourceLocation playerID = new ResourceLocation(playerPatch.getOriginal().getUUID().toString());
+			ResourceLocation playerID = ResourceLocation.parse(playerPatch.getOriginal().getUUID().toString());
 			Core core = Core.get(LogicalSide.CLIENT);
 			PlayerData playerData = core.getLoader().PLAYER_LOADER.getData().get(playerID);
 			if (playerData != null) {
@@ -55,6 +56,7 @@ public class CompactUtil {
 				}
 			}
 		}
+
 
 		SkillSettings skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData(resourceLocation);
 		Map<ResourceLocation, CustomReqType> templateData = SkillRequirements.TEMPLATES.getData();
@@ -81,14 +83,14 @@ public class CompactUtil {
 			return new HashMap<>();
 		}
 
-		Map<String, Integer> playerLevels = APIUtils.getAllLevels(playerPatch.getOriginal());
+		Map<String, Long> playerLevels = APIUtils.getAllLevels(playerPatch.getOriginal());
 		Map<String, Integer> unmetSkillReqs = new HashMap<>();
 		if (!requiredSkills.isEmpty()) {
 			requiredSkills.forEach((skillName, requiredLevel) -> {
 				// skips process required level < 0
 				if (requiredLevel <= 0) return;
 				if (playerLevels.containsKey(skillName)) {
-					int playerLevel = playerLevels.get(skillName);
+					long playerLevel = playerLevels.get(skillName);
 					boolean isSatisfied = playerLevel >= requiredLevel;
 					if (!isSatisfied) {
 						unmetSkillReqs.put(skillName, requiredLevel);
@@ -101,15 +103,16 @@ public class CompactUtil {
 		return unmetSkillReqs;
 	}
 
-	public static Map<String, Integer> getHandItemCondition(PlayerPatch<?> playerPatch, ReqType reqType) {
-		// project mmo requirement map
+	public static Map<String, Long> getHandItemCondition(PlayerPatch<?> playerPatch, ReqType reqType) {
+		// project mmo requirement skillSettingsMap
 		var usedItemHand = playerPatch.getOriginal().getUsedItemHand();
 		var validItem = playerPatch.getValidItemInHand(usedItemHand);
-		return getItemCondition(validItem, reqType);
+		var level = playerPatch.getLevel();
+		return getItemCondition(validItem, level, reqType);
 	}
 
-	public static Map<String, Integer> getItemCondition(ItemStack itemStack, ReqType reqType) {
-		return APIUtils.getRequirementMap(itemStack, reqType, LogicalSide.CLIENT);
+	public static Map<String, Long> getItemCondition(ItemStack itemStack, Level level, ReqType reqType) {
+		return APIUtils.getRequirementMap(itemStack, level, reqType, LogicalSide.CLIENT);
 	}
 
 	public static void displayMessage(Component text, Player player) {
@@ -117,11 +120,16 @@ public class CompactUtil {
 	}
 
 	public static ResourceLocation learnable(String val) {
-		return new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/" + val);
+		return ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "learn_able_skills/" + val);
 	}
 
 	public static ResourceLocation innate(String val) {
-		return new ResourceLocation(EpicFightIntegration.MODID, "other_skills/" + val);
+		return ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "other_skills/" + val);
+	}
+
+	public static ResourceLocation getRlByCategory(Skill skill) {
+		String skillName = skill.getRegistryName().getPath();
+		return skill.getCategory().learnable() ? learnable(skillName) : innate(skillName);
 	}
 
 	public static ItemStack getValidItem(PlayerPatch<?> playerPatch) {

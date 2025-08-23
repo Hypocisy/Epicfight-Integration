@@ -16,14 +16,14 @@ public class SkillRequirements {
     public static final MergeableCodecDataManager<SkillSettings, SkillSettings> SKILL_SETTINGS = new MergeableCodecDataManager<>(
             "skill_settings",
             DATA_LOGGER,
-            SkillSettings.CODEC,
+            SkillSettings.MAP_CODEC,
             SkillRequirements::mergeLoaderData,
             SkillRequirements::printData,
             SkillSettings::new, null);
     public static final MergeableCodecDataManager<CustomReqType, CustomReqType> TEMPLATES = new MergeableCodecDataManager<>(
             "templates",
             DATA_LOGGER,
-            CustomReqType.CODEC,
+            CustomReqType.MAP_CODEC,
             SkillRequirements::mergeLoaderData,
             SkillRequirements::printData,
             CustomReqType::new, null);

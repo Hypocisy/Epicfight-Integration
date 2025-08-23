@@ -1,49 +1,48 @@
 package com.kumoe.EpicFightIntegration.network;
 
+import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import com.kumoe.EpicFightIntegration.config.codecs.CustomReqType;
 import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
-import com.mojang.serialization.Codec;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Supplier;
 
-public class SkillLevelSyncPacket {
-    private static final Codec<Map<ResourceLocation, CustomReqType>> MAPPER =
-            Codec.unboundedMap(ResourceLocation.CODEC, CustomReqType.CODEC);
-    public static Map<ResourceLocation, CustomReqType> SYNCED_DATA = new HashMap<>();
+public record SkillLevelSyncPacket(Map<ResourceLocation, CustomReqType> reqTypeMap) implements CustomPacketPayload {
+	public static final Type<SkillLevelSyncPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "sync_skill_level"));
 
-    private final Map<ResourceLocation, CustomReqType> map;
+	public static final StreamCodec<FriendlyByteBuf, SkillLevelSyncPacket> STREAM_CODEC = StreamCodec.composite(
+			ByteBufCodecs.map(
+					HashMap::new,
+					ByteBufCodecs.fromCodec(ResourceLocation.CODEC),
+					ByteBufCodecs.fromCodec(CustomReqType.codec())
+			),
+			SkillLevelSyncPacket::reqTypeMap,    // getter function
+			SkillLevelSyncPacket::new    // factory function
+	);
 
-    public SkillLevelSyncPacket(Map<ResourceLocation, CustomReqType> map) {
-        this.map = map;
-    }
+	public static Map<ResourceLocation, CustomReqType> SYNCED_DATA = new HashMap<>();
 
-    public static SkillLevelSyncPacket decode(FriendlyByteBuf buffer) {
-        return new SkillLevelSyncPacket(MAPPER.parse(NbtOps.INSTANCE, buffer.readNbt()).result().orElse(new HashMap<>()));
-    }
+	public static void handle(final SkillLevelSyncPacket data, final IPayloadContext context) {
+		context.enqueueWork(() -> {
+			Map<ResourceLocation, CustomReqType> map = SkillRequirements.TEMPLATES.getData();
+			map.putAll(data.reqTypeMap);
+		});
 
-    public void encode(FriendlyByteBuf buffer) {
-        buffer.writeNbt((CompoundTag) (MAPPER.encodeStart(NbtOps.INSTANCE, this.map).result().orElse(new CompoundTag())));
-    }
+		context.enqueueWork(data::handlePacketOnMainThread);
+	}
 
-    public void onPacketReceived(Supplier<NetworkEvent.Context> contextGetter) {
-        NetworkEvent.Context context = contextGetter.get();
-        context.enqueueWork(() -> {
-            Map<ResourceLocation, CustomReqType> map = SkillRequirements.TEMPLATES.getData();
-            map.putAll(this.map);
-        });
+	private void handlePacketOnMainThread() {
+		SYNCED_DATA = this.reqTypeMap;
+	}
 
-        context.enqueueWork(this::handlePacketOnMainThread);
-        context.setPacketHandled(true);
-    }
-
-    private void handlePacketOnMainThread() {
-        SYNCED_DATA = this.map;
-    }
+	@Override
+	public Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
 }
