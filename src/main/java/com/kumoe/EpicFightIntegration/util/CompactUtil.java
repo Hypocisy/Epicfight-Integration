@@ -32,11 +32,11 @@ public class CompactUtil {
 
 	public static void autoToggleMode(PlayerPatch<?> playerPatch) {
 		if (playerPatch.getOriginal().tickCount % EFIConfig.autoToggleTime == 0) {
-			if (playerPatch.isBattleMode() && playerPatch.getTarget() == null) {
-				playerPatch.toMiningMode(true);
+			if (playerPatch.isEpicFightMode() && playerPatch.getTarget() == null) {
+				playerPatch.toVanillaMode(true);
 				CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA)), playerPatch.getOriginal());
-			} else if (!playerPatch.isBattleMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
-				playerPatch.toBattleMode(true);
+			} else if (playerPatch.isVanillaMode() && playerPatch.getTarget() != null && playerPatch.getTarget().isAlive()) {
+				playerPatch.toEpicFightMode(true);
 				CompactUtil.displayMessage(Component.translatable("debug.efi_mod.toggle", playerPatch.getPlayerMode()).withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_AQUA)), playerPatch.getOriginal());
 			}
 		}
@@ -152,5 +152,9 @@ public class CompactUtil {
 			}
 		}
 		return true;
+	}
+
+	public static ResourceLocation getRlByCategory(Skill skill) {
+		return skill.getCategory().learnable() ? learnable(skill.getRegistryName().getPath()) : innate(skill.getRegistryName().getPath());
 	}
 }

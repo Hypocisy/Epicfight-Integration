@@ -8,9 +8,6 @@
 
   ],
   "client": [
-    "ControllEngineMixin",
-    "PhantomAscentSkillMixin",
-    "RenderEngineMixin",
     "SkillBookScreenMixin"
   ],
   "injectors": {
