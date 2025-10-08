@@ -8,8 +8,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 
-import static com.kumoe.EpicFightIntegration.event.ForgeEvents.registerPackets;
-
 @Mod.EventBusSubscriber(modid = EpicFightIntegration.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEvents {
     @SubscribeEvent
@@ -22,6 +20,7 @@ public class ModEvents {
     }
     @SubscribeEvent
     public static void onFMLCommonSetup(final FMLCommonSetupEvent event) {
-        registerPackets();
+        event.enqueueWork(ForgeEvents::registerPackets);
     }
+
 }

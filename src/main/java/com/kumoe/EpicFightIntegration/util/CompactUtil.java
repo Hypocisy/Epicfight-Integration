@@ -46,7 +46,7 @@ public class CompactUtil {
 
 		// project mmo ignoreReqs command integration
 		if (playerPatch.isLogicalClient()) {
-			ResourceLocation playerID = new ResourceLocation(playerPatch.getOriginal().getUUID().toString());
+			ResourceLocation playerID = ResourceLocation.tryParse(playerPatch.getOriginal().getUUID().toString());
 			Core core = Core.get(LogicalSide.CLIENT);
 			PlayerData playerData = core.getLoader().PLAYER_LOADER.getData().get(playerID);
 			if (playerData != null) {
@@ -117,11 +117,11 @@ public class CompactUtil {
 	}
 
 	public static ResourceLocation learnable(String val) {
-		return new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/" + val);
+		return ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "learn_able_skills/" + val);
 	}
 
 	public static ResourceLocation innate(String val) {
-		return new ResourceLocation(EpicFightIntegration.MODID, "other_skills/" + val);
+		return ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "other_skills/" + val);
 	}
 
 	public static ItemStack getValidItem(PlayerPatch<?> playerPatch) {

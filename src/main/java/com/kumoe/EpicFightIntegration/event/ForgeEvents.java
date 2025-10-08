@@ -12,9 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.OnDatapackSyncEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -34,7 +32,7 @@ import java.util.UUID;
 public class ForgeEvents {
 	private static final String CHANNEL_PROTOCOL = "0";
 	public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-			new ResourceLocation(EpicFightIntegration.MODID, "main"),
+			ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "main"),
 			() -> CHANNEL_PROTOCOL,
 			CHANNEL_PROTOCOL::equals,
 			CHANNEL_PROTOCOL::equals);
@@ -54,6 +52,8 @@ public class ForgeEvents {
 				SkillLevelSyncPacket::encode,
 				SkillLevelSyncPacket::decode,
 				SkillLevelSyncPacket::onPacketReceived);
+		SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
+		SkillRequirements.TEMPLATES.subscribeAsSyncable(CHANNEL, SkillLevelSyncPacket::new);
 	}
 
 	@SubscribeEvent
@@ -62,11 +62,11 @@ public class ForgeEvents {
 		event.addListener(SkillRequirements.TEMPLATES);
 	}
 
-	@SubscribeEvent
+	/*@SubscribeEvent
 	public static void onDatapackSync(OnDatapackSyncEvent event) {
 		SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(CHANNEL, SkillRequirementSyncPacket::new);
 		SkillRequirements.TEMPLATES.subscribeAsSyncable(CHANNEL, SkillLevelSyncPacket::new);
-	}
+	}*/
 
 	public static void resetData() {
 		SkillRequirements.SKILL_SETTINGS.clearData();
@@ -82,17 +82,8 @@ public class ForgeEvents {
 		handelSkillCast(playerPatch, player);
 
 	}
-	@SubscribeEvent
-	public static void onMovementUpdate(MovementInputUpdateEvent event) {
 
-		var player = event.getEntity();
-		var playerPatch = EpicFightCapabilities.getEntityPatch(player, PlayerPatch.class);
-
-		handelSkillCast(playerPatch, player);
-
-	}
-
-	private static void handelSkillCast(PlayerPatch<?> playerPatch, Player player) {
+	static void handelSkillCast(PlayerPatch<?> playerPatch, Player player) {
 		playerPatch.getEventListener().addEventListener(
 				PlayerEventListener.EventType.SKILL_CAST_EVENT,
 				UUID.randomUUID(),

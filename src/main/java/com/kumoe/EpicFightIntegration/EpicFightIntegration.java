@@ -3,9 +3,9 @@ package com.kumoe.EpicFightIntegration;
 import com.kumoe.EpicFightIntegration.config.Config;
 import com.mojang.logging.LogUtils;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
@@ -18,10 +18,10 @@ public class EpicFightIntegration {
     private static EpicFightIntegration instance;
 
     final Pair<Config, ForgeConfigSpec> configured = (new ForgeConfigSpec.Builder()).configure(Config::new);
-    public EpicFightIntegration() {
+    public EpicFightIntegration(FMLJavaModLoadingContext context) {
         instance = this;
         // Register the commonSetup method for modloading
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, configured.getRight());
+        context.registerConfig(ModConfig.Type.COMMON, configured.getRight());
     }
 
     public static EpicFightIntegration getInstance() {

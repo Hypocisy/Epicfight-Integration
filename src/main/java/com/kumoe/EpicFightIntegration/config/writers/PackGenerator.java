@@ -86,7 +86,7 @@ public class PackGenerator {
 
         Map<ResourceLocation, CustomReqType> existing = SkillRequirements.TEMPLATES.getData();
         Map<ResourceLocation, SkillSettings> skillSettingsData = SkillRequirements.SKILL_SETTINGS.getData();
-        SkillSettings s = SkillRequirements.SKILL_SETTINGS.getData(new ResourceLocation(EpicFightIntegration.MODID, "learn_able_skills/parrying"));
+        SkillSettings s = SkillRequirements.SKILL_SETTINGS.getData(ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "learn_able_skills/parrying"));
         EpicFightIntegration.LOGGER.debug(s.toString());
         skillSettingsData.keySet().forEach(resourceLocation -> EpicFightIntegration.LOGGER.debug(resourceLocation.getPath()));
 //        server.getPlayerList().getPlayers().forEach(serverPlayer -> serverPlayer.sendSystemMessage(Component.literal( ()->).toString())));
@@ -104,7 +104,7 @@ public class PackGenerator {
             SkillSettings existing = SkillRequirements.SKILL_SETTINGS.getData(id);
             return gson.toJson(SkillSettings.CODEC.encodeStart(JsonOps.INSTANCE, applyDefaults ? existing : new SkillSettings()).result().get().getAsJsonObject());
         }), TEMPLATES("templates/skills", server -> {
-            ResourceLocation resourceLocation = new ResourceLocation(EpicFightIntegration.MODID, "test");
+            ResourceLocation resourceLocation = ResourceLocation.fromNamespaceAndPath(EpicFightIntegration.MODID, "test");
             Set<ResourceLocation> temp = new HashSet<>();
             temp.add(resourceLocation);
             return temp;
