@@ -7,9 +7,9 @@ import harmonised.pmmo.config.codecs.DataSource;
 
 import java.util.*;
 
-public record CustomReqType(Optional<Map<String, Integer>> levels) implements DataSource<CustomReqType> {
+public record CustomReqType(Optional<Map<String, Long>> levels) implements DataSource<CustomReqType> {
 	public static final MapCodec<CustomReqType> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-			Codec.unboundedMap(Codec.STRING, Codec.INT).optionalFieldOf("level").forGetter(CustomReqType::levels)
+			Codec.unboundedMap(Codec.STRING, Codec.LONG).optionalFieldOf("level").forGetter(CustomReqType::levels)
 	).apply(instance, CustomReqType::new));
 
     public CustomReqType() {
@@ -18,7 +18,7 @@ public record CustomReqType(Optional<Map<String, Integer>> levels) implements Da
 
     @Override
     public CustomReqType combine(CustomReqType two) {
-        Map<String, Integer> combinedLevels = new HashMap<>();
+        Map<String, Long> combinedLevels = new HashMap<>();
         this.levels.ifPresent(combinedLevels::putAll);
         two.levels.ifPresent(stringIntegerMap -> stringIntegerMap.forEach((key, value) -> combinedLevels.merge(key, value, Math::max)));
         return new CustomReqType(Optional.of(combinedLevels));

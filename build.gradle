@@ -181,8 +181,8 @@ dependencies {
     annotationProcessor 'com.blamejared.crafttweaker:Crafttweaker_Annotation_Processors:3.0.0.15'
 //    annotationProcessor "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor "com.blamejared.crafttweaker:CraftTweaker-neoforge-${minecraft_version}:${ct_version}"
-    implementation "curse.maven:project-mmo-353935:6696480"
-    implementation "curse.maven:epic-fight-mod-405076:6903518"
+    implementation "curse.maven:project-mmo-353935:7065007"
+    implementation "curse.maven:epic-fight-mod-405076:7046108"
 //    implementation ("curse.maven:weapons-of-miracles-epicfight-918614:5889471")
 //    runtimeOnly ("curse.maven:mutil-351914:4824501")
     runtimeOnly "curse.maven:jei-238222:6829086"

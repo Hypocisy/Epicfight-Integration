@@ -3,6 +3,7 @@ package com.kumoe.EpicFightIntegration.event;
 
 import com.kumoe.EpicFightIntegration.EpicFightIntegration;
 import com.kumoe.EpicFightIntegration.config.EFIConfig;
+import com.kumoe.EpicFightIntegration.config.codecs.SkillRequirements;
 import com.kumoe.EpicFightIntegration.network.SkillLevelSyncPacket;
 import com.kumoe.EpicFightIntegration.network.SkillRequirementSyncPacket;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,5 +29,7 @@ public class ModEvents {
 		final PayloadRegistrar registrar = event.registrar(EpicFightIntegration.MODID);
 		registrar.playToClient(SkillRequirementSyncPacket.TYPE, SkillRequirementSyncPacket.STREAM_CODEC, SkillRequirementSyncPacket::handle);
 		registrar.playToClient(SkillLevelSyncPacket.TYPE, SkillLevelSyncPacket.STREAM_CODEC, SkillLevelSyncPacket::handle);
+		SkillRequirements.SKILL_SETTINGS.subscribeAsSyncable(SkillRequirementSyncPacket::new);
+		SkillRequirements.TEMPLATES.subscribeAsSyncable(SkillLevelSyncPacket::new);
 	}
 }

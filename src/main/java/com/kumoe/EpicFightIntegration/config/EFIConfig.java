@@ -9,6 +9,7 @@ public final class EFIConfig {
 
     public static Config config = EpicFightIntegration.getInstance().getConfig();
     public static boolean enableAutoToggleMode;
+    public static boolean require_combined_weapon_level;
     public static int autoToggleTime;
 
     public static void bake() {
@@ -21,6 +22,7 @@ public final class EFIConfig {
             enableDebug = config.enableDebug.get();
             enableActionBar = config.enableActionBar.get();
             enableAutoToggleMode = config.enableAutoToggleMode.get();
+	        require_combined_weapon_level = config.require_combined_weapon_level.get();
             autoToggleTime = config.autoToggleTime.get();
         } catch (Exception var) {
             EpicFightIntegration.LOGGER.warn("An exception was caused trying to load the config for GeneralSettings.\n" + var);
