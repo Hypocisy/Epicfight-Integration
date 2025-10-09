@@ -42,11 +42,11 @@ public class CompactUtil {
 		}
 	}
 
-	public static Map<String, Integer> getSkillCondition(PlayerPatch<?> playerPatch, ResourceLocation resourceLocation) {
+	public static Map<String, Integer> getSkillCondition(Player player, ResourceLocation resourceLocation) {
 
 		// project mmo ignoreReqs command integration
-		if (playerPatch.isLogicalClient()) {
-			ResourceLocation playerID = ResourceLocation.tryParse(playerPatch.getOriginal().getUUID().toString());
+		if (player.level().isClientSide) {
+			ResourceLocation playerID = ResourceLocation.tryParse(player.getStringUUID());
 			Core core = Core.get(LogicalSide.CLIENT);
 			PlayerData playerData = core.getLoader().PLAYER_LOADER.getData().get(playerID);
 			if (playerData != null) {
@@ -66,38 +66,34 @@ public class CompactUtil {
 				customReqType.levels().ifPresent(tempMap -> tempMap.forEach((s, integer) -> conditions.merge(s, integer, Math::max)));
 		}));
 		skillSettingsData.defaultLevels().flatMap(CustomReqType::levels).ifPresent(pLevels -> pLevels.forEach((string, integer) -> conditions.merge(string, integer, Math::max)));
-		return getRemainMapOrEmpty(playerPatch, conditions);
+		return getRemainMapOrEmpty(APIUtils.getAllLevels(player), conditions);
 	}
 
 	/**
 	 * Get remain condition if player not matches.<br>
 	 *
-	 * @param playerPatch    who need to check this requirement
+	 * @param playerLevels    who's level need to check this requirement
 	 * @param requiredSkills The requirement skills
 	 * @return Empty HashMap if requiredSkills is empty, else return remain unmet requirement
 	 */
-	public static Map<String, Integer> getRemainMapOrEmpty(PlayerPatch<?> playerPatch, Map<String, Integer> requiredSkills) {
+	public static Map<String, Integer> getRemainMapOrEmpty(Map<String, Integer> playerLevels, Map<String, Integer> requiredSkills) {
 		if (requiredSkills.isEmpty()) {
 			return new HashMap<>();
 		}
-
-		Map<String, Integer> playerLevels = APIUtils.getAllLevels(playerPatch.getOriginal());
 		Map<String, Integer> unmetSkillReqs = new HashMap<>();
-		if (!requiredSkills.isEmpty()) {
-			requiredSkills.forEach((skillName, requiredLevel) -> {
-				// skips process required level < 0
-				if (requiredLevel <= 0) return;
-				if (playerLevels.containsKey(skillName)) {
-					int playerLevel = playerLevels.get(skillName);
-					boolean isSatisfied = playerLevel >= requiredLevel;
-					if (!isSatisfied) {
-						unmetSkillReqs.put(skillName, requiredLevel);
-					}
-				} else {
+		requiredSkills.forEach((skillName, requiredLevel) -> {
+			// skips process required level < 0
+			if (requiredLevel <= 0) return;
+			if (playerLevels.containsKey(skillName)) {
+				int playerLevel = playerLevels.get(skillName);
+				boolean isSatisfied = playerLevel >= requiredLevel;
+				if (!isSatisfied) {
 					unmetSkillReqs.put(skillName, requiredLevel);
 				}
-			});
-		}
+			} else {
+				unmetSkillReqs.put(skillName, requiredLevel);
+			}
+		});
 		return unmetSkillReqs;
 	}
 
@@ -129,32 +125,56 @@ public class CompactUtil {
 	}
 
 	/**
-	 * Is player match custom datapack conditions?
-	 *
-	 * @param playerPatch packed player by epicfight
-	 * @return true if player match, otherwise false.
+	 * Checks if player meets custom skill conditions defined for weapon.
 	 */
-	public static boolean isMatchCondition(LocalPlayerPatch playerPatch) {
+	public static boolean matchCustomSkillCondition(LocalPlayerPatch playerPatch, ReqType reqType) {
 		ItemStack itemStack = CompactUtil.getValidItem(playerPatch);
 		CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
 		Skill innateSkill = item.getInnateSkill(playerPatch, itemStack);
 
-		if (innateSkill != null) {
-			// custom skill conditions
-			Map<String, Integer> conditions = CompactUtil.getSkillCondition(playerPatch, CompactUtil.innate(innateSkill.getRegistryName().getPath()));
-			if (EFIConfig.enableDebug) {
-				playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
-				playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.2", ReqType.WEAPON).withStyle(ChatFormatting.BLUE));
-			}
-			if (!conditions.isEmpty()) {
-				CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", conditions).withStyle(Style.EMPTY.withColor(ChatFormatting.RED)), playerPatch.getOriginal());
-				return false;
-			}
+		if (innateSkill == null) return true;
+
+		Map<String, Integer> conditions = CompactUtil.getSkillCondition(playerPatch.getOriginal(), getRlByCategory(innateSkill));
+		if (conditions.isEmpty()) return true;
+
+		if (EFIConfig.enableDebug) {
+			playerPatch.getOriginal().sendSystemMessage(Component.translatable(
+					"debug.efi_mod.message.1", innateSkill.getRegistryName().getPath()
+			).withStyle(ChatFormatting.DARK_AQUA));
+			playerPatch.getOriginal().sendSystemMessage(Component.translatable(
+					"debug.efi_mod.message.2", reqType
+			).withStyle(ChatFormatting.BLUE));
 		}
-		return true;
+
+		CompactUtil.displayMessage(
+				Component.translatable("pmmo.msg.denial.skill", conditions)
+						.withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
+				playerPatch.getOriginal());
+
+		return false;
 	}
 
 	public static ResourceLocation getRlByCategory(Skill skill) {
 		return skill.getCategory().learnable() ? learnable(skill.getRegistryName().getPath()) : innate(skill.getRegistryName().getPath());
 	}
+
+	public static boolean isMatchCondition(LocalPlayerPatch playerPatch, ReqType reqType) {
+		ItemStack itemStack = CompactUtil.getValidItem(playerPatch);
+		CapabilityItem item = EpicFightCapabilities.getItemStackCapability(itemStack);
+		Skill innateSkill = item.getInnateSkill(playerPatch, itemStack);
+
+		Map<String, Integer> handItemCondition = CompactUtil.getHandItemCondition(playerPatch, reqType);
+		var remainCondition = getRemainMapOrEmpty(APIUtils.getAllLevels(playerPatch.getOriginal()), handItemCondition);
+
+		if (innateSkill == null || remainCondition.isEmpty()) {
+			return true;
+		}
+		if (EFIConfig.enableDebug) {
+			playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.3", innateSkill.getRegistryName().getPath()).withStyle(ChatFormatting.DARK_AQUA));
+			playerPatch.getOriginal().sendSystemMessage(Component.translatable("debug.efi_mod.message.4", reqType).withStyle(ChatFormatting.BLUE));
+		}
+		CompactUtil.displayMessage(Component.translatable("pmmo.msg.denial.skill", handItemCondition).withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)), playerPatch.getOriginal());
+		return false;
+	}
 }
+

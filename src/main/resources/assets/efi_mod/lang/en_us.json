@@ -1,9 +1,10 @@
 {
-  "pmmo.msg.denial.skill": "You need leaning pmmo skill of: %s",
-  "inventory.epicfight.guide_innate_tooltip.required_skill": "Required Project mmo skill: %s",
-  "debug.efi_mod.toggle": "Auto toggle player mode to : %s",
-  "debug.efi_mod.message.1": "[Debug]EpicFight Skill Registry name: %s",
-  "debug.efi_mod.message.2": "[Debug]Efi conditions: %s",
-  "debug.efi_mod.message.3": "[Debug]Project mmo ReqType: %s",
-  "debug.efi_mod.message.4": "[Debug]Project mmo conditions: %s"
+  "pmmo.msg.denial.skill": "You need to learn the following Project MMO skills: %s",
+  "inventory.epicfight.guide_innate_tooltip.required_skill": "Required Project MMO skill: %s",
+  "debug.efi_mod.toggle": "[Debug] Automatically toggled player mode to: %s",
+  "debug.efi_mod.message.1": "[Debug] Epic Fight skill registry name: %s",
+  "pmmo.msg.denial.skillcast": "You need to learn the following Project MMO skills to use '%s': %s",
+  "debug.efi_mod.message.2": "[Debug] Epic Fight conditions: %s",
+  "debug.efi_mod.message.3": "[Debug] Project MMO requirement type: %s",
+  "debug.efi_mod.message.4": "[Debug] Project MMO conditions: %s"
 }

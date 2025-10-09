@@ -33,12 +33,13 @@ public abstract class SkillBookScreenMixin {
     @Unique
     Map<String, Integer> eFIMod$skillResult;
 
+	@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;",ordinal = 0), locals = LocalCapture.CAPTURE_FAILSOFT)
     private void initMixin(CallbackInfo ci, Optional<SkillContainer> thisSkill, Optional<SkillContainer> priorSkill, boolean isUsing, boolean condition, Component tooltip, Window window, Button learnButton, int consumptionEndPos) {
         PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
         StringBuilder format = new StringBuilder();
         if (playerpatch != null && condition) {
-            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch, CompactUtil.learnable(skill.getRegistryName().getPath()));
+            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch.getOriginal(), CompactUtil.learnable(skill.getRegistryName().getPath()));
             if (!eFIMod$skillResult.isEmpty()) {
                 learnButton.active = false;
                 String formatter = "%s: %s\n";
