@@ -12,8 +12,8 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 @Mixin(value = RenderEngine.class, remap = false)
 public abstract class RenderEngineMixin {
-	@Inject(method = "lambda$epicfight$itemTooltip$7", at = @At(value = "INVOKE", remap = false, target = "Lnet/neoforged/neoforge/event/entity/player/ItemTooltipEvent;getItemStack()Lnet/minecraft/world/item/ItemStack;", ordinal = 0))
-	private static void epicfight$itemTooltip(LocalPlayerPatch playerpatch, ItemTooltipEvent event, CapabilityItem itemCapability, CallbackInfo ci) {
+	@Inject(method = "lambda$epicfight$itemTooltip$7", at = @At(value = "INVOKE", remap = false, target = "Ljava/util/Iterator;hasNext()Z"))
+	private static void epicfight$itemTooltip(LocalPlayerPatch playerPatch, ItemTooltipEvent event, CapabilityItem itemCapability, CallbackInfo ci) {
 	
 	}
 }
