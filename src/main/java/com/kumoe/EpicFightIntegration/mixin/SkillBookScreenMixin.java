@@ -1,7 +1,9 @@
 package com.kumoe.EpicFightIntegration.mixin;
 
 import com.kumoe.EpicFightIntegration.util.CompactUtil;
-import com.mojang.blaze3d.platform.Window;
+import com.llamalad7.mixinextras.expression.Definition;
+import com.llamalad7.mixinextras.expression.Expression;
+import com.llamalad7.mixinextras.sugar.Local;
 import harmonised.pmmo.setup.datagen.LangProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.components.Button;
@@ -14,45 +16,46 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.gui.screen.SkillBookScreen;
 import yesman.epicfight.skill.Skill;
-import yesman.epicfight.skill.SkillContainer;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 
 import java.util.Map;
-import java.util.Optional;
 
-@Mixin(value = SkillBookScreen.class,remap = false)
+@Mixin(value = SkillBookScreen.class, remap = false)
 public abstract class SkillBookScreenMixin {
 
-    @Shadow(remap = false)
-    @Final
-    protected Skill skill;
-    @Unique
-    Map<String, Long> eFIMod$skillResult;
+	@Shadow(remap = false)
+	@Final
+	protected Skill skill;
+	@Unique
+	Map<String, Long> eFIMod$skillResult;
 
-    @Inject(method = "init()V", at = @At(value = "INVOKE", target = "Lyesman/epicfight/client/gui/screen/SkillBookScreen;addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;",ordinal = 0), locals = LocalCapture.CAPTURE_FAILSOFT)
-    private void initMixin(CallbackInfo ci, Optional<SkillContainer> thisSkill, Optional<SkillContainer> priorSkill, boolean isUsing, boolean condition, Component tooltip, Window window, Button learnButton, int consumptionEndPos) {
-        PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
-        StringBuilder format = new StringBuilder();
-        if (playerpatch != null && condition) {
-            eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch.getOriginal(), CompactUtil.learnable(skill.getRegistryName().getPath()));
-            if (!eFIMod$skillResult.isEmpty()) {
-                learnButton.active = false;
-                String formatter = "%s: %s";
-                for (Map.Entry<String, Long> entry : eFIMod$skillResult.entrySet()) {
-                    String skillName = entry.getKey();
-	                Long level = entry.getValue();
-                    format.append(formatter.formatted(LangProvider.skill(skillName).getString(), level));
-                }
 
-                tooltip = Component.translatable("inventory.epicfight.guide_innate_tooltip.required_skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
+	@Definition(id = "addRenderableWidget", method = "addRenderableWidget")
+//	@Definition(id = "learnButton", local = @Local(name = "learnButton"))
+	@Expression("this.addRenderableWidget(?)")
+	@Inject(method = "init()V", at = @At(value = "MIXINEXTRAS:EXPRESSION", ordinal = 0))
+	private void addSkillRequirementToolTip(CallbackInfo ci, @Local(name = "condition") boolean condition, @Local(name = "learnButton") Button learnButton) {
+		PlayerPatch<?> playerpatch = ClientEngine.getInstance().getPlayerPatch();
+		StringBuilder format = new StringBuilder();
+		if (playerpatch != null && condition) {
+			eFIMod$skillResult = CompactUtil.getSkillCondition(playerpatch.getOriginal(), CompactUtil.learnable(skill.getRegistryName().getPath()));
+			if (!eFIMod$skillResult.isEmpty()) {
+				learnButton.active = false;
+				String formatter = "%s: %s";
+				for (Map.Entry<String, Long> entry : eFIMod$skillResult.entrySet()) {
+					String skillName = entry.getKey();
+					Long level = entry.getValue();
+					format.append(formatter.formatted(LangProvider.skill(skillName).getString(), level));
+				}
 
-                learnButton.setTooltip(Tooltip.create(tooltip));
-                learnButton.setMessage(Component.translatable("gui.epicfight.unusable"));
-            }
-        }
-    }
+				Component tooltip = Component.translatable("inventory.epicfight.guide_innate_tooltip.required_skill", format.toString()).withStyle(ChatFormatting.DARK_GREEN);
+
+				learnButton.setTooltip(Tooltip.create(tooltip));
+				learnButton.setMessage(Component.translatable("gui.epicfight.unusable"));
+			}
+		}
+	}
 }
